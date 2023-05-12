@@ -33,6 +33,7 @@ import com.alibaba.druid.sql.dialect.db2.ast.stmt.DB2SelectQueryBlock;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2ExprParser;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2Lexer;
 import com.alibaba.druid.sql.dialect.db2.parser.DB2StatementParser;
+import com.alibaba.druid.sql.dialect.doris.parser.DorisStatementParser;
 import com.alibaba.druid.sql.dialect.h2.parser.H2ExprParser;
 import com.alibaba.druid.sql.dialect.h2.parser.H2Lexer;
 import com.alibaba.druid.sql.dialect.h2.parser.H2StatementParser;
@@ -150,6 +151,8 @@ public class SQLParserUtils {
                 return new ClickhouseStatementParser(sql);
             case starrocks:
                 return new StarRocksStatementParser(sql);
+            case doris:
+                return new DorisStatementParser(sql);
             default:
                 return new SQLStatementParser(sql, dbType);
         }

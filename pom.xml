@@ -75,12 +75,14 @@
 
 	<distributionManagement>
 		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<id>maven-207</id>
+			<name>maven-207</name>
+			<url>https://maven.southinfo.net/repository/releases/</url>
 		</repository>
 		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<id>maven-207</id>
+			<name>maven-207</name>
+			<url>https://maven.southinfo.net/repository/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
 

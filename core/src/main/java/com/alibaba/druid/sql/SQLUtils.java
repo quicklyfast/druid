@@ -27,6 +27,7 @@ import com.alibaba.druid.sql.dialect.clickhouse.visitor.ClickSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.clickhouse.visitor.ClickhouseOutputVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2OutputVisitor;
 import com.alibaba.druid.sql.dialect.db2.visitor.DB2SchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.doris.visitor.DorisOutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
 import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInsert;
@@ -532,6 +533,8 @@ public class SQLUtils {
                 return new OscarOutputVisitor(out);
             case starrocks:
                 return new StarRocksOutputVisitor(out);
+            case doris:
+                return new DorisOutputVisitor(out);
             default:
                 return new SQLASTOutputVisitor(out, dbType);
         }

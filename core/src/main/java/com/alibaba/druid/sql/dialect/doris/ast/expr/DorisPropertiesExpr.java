@@ -41,8 +41,12 @@ public class DorisPropertiesExpr extends SQLExprImpl implements DorisExpr, SQLRe
         );
     }
 
-    public void addProperties(SQLAssignItem property) {
-        properties.add(property);
+    public void addProperties(SQLAssignItem x) {
+        if (x != null) {
+            x.setParent(this);
+        }
+
+        properties.add(x);
     }
 
     @Override

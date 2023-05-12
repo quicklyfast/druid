@@ -1,6 +1,9 @@
 package com.alibaba.druid.sql.dialect.doris.parser;
 
 import com.alibaba.druid.DbType;
+import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
+import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
 import com.alibaba.druid.sql.dialect.doris.ast.expr.DorisPropertiesExpr;
 import com.alibaba.druid.sql.parser.Lexer;
 import com.alibaba.druid.sql.parser.SQLExprParser;
@@ -78,7 +81,21 @@ public class DorisExprParser extends SQLExprParser {
             if (Token.RPAREN == lexer.token()) {
                 break;
             }
-            propertiesExpr.addProperties(parseAssignItem(true, propertiesExpr));
+
+            SQLAssignItem p = new SQLAssignItem();
+            p.setParent(propertiesExpr);
+
+            SQLCharExpr name = new SQLCharExpr(SQLUtils.normalize(lexer.stringVal()));
+            p.setTarget(name);
+            accept(Token.LITERAL_ALIAS);
+
+            accept(Token.EQ);
+
+            SQLCharExpr value = new SQLCharExpr(SQLUtils.normalize(lexer.stringVal()));
+            p.setValue(value);
+            accept(Token.LITERAL_ALIAS);
+
+            propertiesExpr.addProperties(p);
 
             if (Token.COMMA == lexer.token()) {
                 accept(Token.COMMA);

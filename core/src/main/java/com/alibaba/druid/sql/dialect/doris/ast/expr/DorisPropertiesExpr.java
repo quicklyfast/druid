@@ -1,7 +1,10 @@
 package com.alibaba.druid.sql.dialect.doris.ast.expr;
 
 import com.alibaba.druid.DbType;
-import com.alibaba.druid.sql.ast.*;
+import com.alibaba.druid.sql.ast.SQLDbTypedObject;
+import com.alibaba.druid.sql.ast.SQLExpr;
+import com.alibaba.druid.sql.ast.SQLExprImpl;
+import com.alibaba.druid.sql.ast.SQLReplaceable;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
@@ -70,8 +73,13 @@ public class DorisPropertiesExpr extends SQLExprImpl implements DorisExpr, SQLRe
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         DorisPropertiesExpr that = (DorisPropertiesExpr) o;
 
@@ -90,7 +98,7 @@ public class DorisPropertiesExpr extends SQLExprImpl implements DorisExpr, SQLRe
     public SQLExpr clone() {
         DorisPropertiesExpr expr = new DorisPropertiesExpr();
         List<SQLAssignItem> props = new ArrayList<>();
-        for (SQLAssignItem item: getProperties()) {
+        for (SQLAssignItem item : getProperties()) {
             props.add(item.clone());
         }
         expr.properties = props;
@@ -99,7 +107,7 @@ public class DorisPropertiesExpr extends SQLExprImpl implements DorisExpr, SQLRe
 
     @Override
     protected void accept0(SQLASTVisitor v) {
-        ((DorisASTVisitor)v).visit(this);
+        ((DorisASTVisitor) v).visit(this);
     }
 
     @Override

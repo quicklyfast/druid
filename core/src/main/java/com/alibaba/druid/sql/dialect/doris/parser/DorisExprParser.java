@@ -2,8 +2,10 @@ package com.alibaba.druid.sql.dialect.doris.parser;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
+import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
 import com.alibaba.druid.sql.dialect.doris.ast.expr.DorisPropertiesExpr;
 import com.alibaba.druid.sql.parser.Lexer;
 import com.alibaba.druid.sql.parser.SQLExprParser;
@@ -77,7 +79,7 @@ public class DorisExprParser extends SQLExprParser {
 
         accept(Token.PROPERTIES);
         accept(Token.LPAREN);
-        for (;;) {
+        for (; ; ) {
             if (Token.RPAREN == lexer.token()) {
                 break;
             }
@@ -105,4 +107,42 @@ public class DorisExprParser extends SQLExprParser {
         accept(Token.RPAREN);
         return propertiesExpr;
     }
+
+    public SQLColumnDefinition parseColumnRest(SQLColumnDefinition column) {
+        String text = lexer.stringVal();
+        for (int i = 0; i < AGGREGATE_FUNCTIONS.length; ++i) {
+            if (text.equalsIgnoreCase(AGGREGATE_FUNCTIONS[i])) {
+                SQLCharExpr aggType = new SQLCharExpr(text);
+                column.setAggType(aggType);
+                lexer.nextToken();
+            }
+        }
+
+        if (lexer.token() == Token.USING) {
+            accept(Token.USING);
+            SQLCharExpr bitmap = new SQLCharExpr(lexer.stringVal());
+            column.setBitmap(bitmap);
+            lexer.nextToken();
+            accept(Token.COMMENT);
+            SQLCharExpr indexComment = new SQLCharExpr(lexer.stringVal());
+            column.setIndexComment(indexComment);
+            lexer.nextToken();
+        }
+
+        if (lexer.token() == Token.DEFAULT) {
+            accept(Token.DEFAULT);
+            SQLExpr defaultExpr = null;
+            if (lexer.token() == Token.LITERAL_CHARS || lexer.token() == Token.LITERAL_ALIAS) {
+                defaultExpr = new SQLCharExpr(SQLUtils.normalize(lexer.stringVal()));
+                lexer.nextToken();
+            } else {
+                defaultExpr = bitOr();
+            }
+            column.setDefaultExpr(defaultExpr);
+        }
+
+        return super.parseColumnRest(column);
+    }
+
+
 }

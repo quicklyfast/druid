@@ -83,6 +83,9 @@ public class SQLColumnDefinition extends SQLObjectImpl implements SQLTableElemen
     }
 
     public void setIndexComment(SQLCharExpr indexComment) {
+        if (indexComment != null) {
+            indexComment.setParent(this);
+        }
         this.indexComment = indexComment;
     }
 
@@ -91,6 +94,9 @@ public class SQLColumnDefinition extends SQLObjectImpl implements SQLTableElemen
     }
 
     public void setBitmap(SQLCharExpr bitmap) {
+        if (bitmap != null) {
+            bitmap.setParent(this);
+        }
         this.bitmap = bitmap;
     }
 
@@ -99,6 +105,9 @@ public class SQLColumnDefinition extends SQLObjectImpl implements SQLTableElemen
     }
 
     public void setAggType(SQLCharExpr aggType) {
+        if (aggType != null) {
+            aggType.setParent(this);
+        }
         this.aggType = aggType;
     }
 

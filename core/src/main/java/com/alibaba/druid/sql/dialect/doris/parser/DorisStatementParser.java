@@ -1,8 +1,10 @@
 package com.alibaba.druid.sql.dialect.doris.parser;
 
 import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.ast.statement.SQLCreateTableStatement;
 import com.alibaba.druid.sql.dialect.doris.ast.expr.DorisPropertiesExpr;
 import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateResourceStatement;
+import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateTableStatement;
 import com.alibaba.druid.sql.parser.*;
 import com.alibaba.druid.util.FnvHash;
 
@@ -28,7 +30,7 @@ public class DorisStatementParser extends SQLStatementParser {
     }
 
     public SQLCreateTableParser getSQLCreateTableParser() {
-        throw new RuntimeException();
+        return new DorisCreateTableParser(exprParser);
     }
 
     public DorisExprParser getDorisExprParser() {
@@ -73,5 +75,17 @@ public class DorisStatementParser extends SQLStatementParser {
 
         return stmt;
     }
+
+    @Override
+    protected SQLCreateTableStatement newCreateStatement() {
+        return new DorisCreateTableStatement(dbType);
+    }
+
+    @Override
+    public SQLCreateTableStatement parseCreateTable() {
+        return new DorisCreateTableParser(this.exprParser)
+                .parseCreateTable();
+    }
+
 
 }

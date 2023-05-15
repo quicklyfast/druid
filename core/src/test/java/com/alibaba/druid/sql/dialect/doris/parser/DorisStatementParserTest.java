@@ -3,13 +3,19 @@ package com.alibaba.druid.sql.dialect.doris.parser;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
+import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
+import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
+import com.alibaba.druid.sql.ast.statement.SQLSelectOrderByItem;
 import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateResourceStatement;
 import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateTableStatement;
 import com.alibaba.druid.sql.visitor.VisitorFeature;
 import junit.framework.TestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DorisStatementParserTest extends TestCase {
 
@@ -55,6 +61,7 @@ public class DorisStatementParserTest extends TestCase {
                 "    k3 CHAR(10) COMMENT \"string column\",\n" +
                 "    k4 INT NOT NULL DEFAULT \"1\" COMMENT \"int column\"\n" +
                 ")\n" +
+                "engine olap\n" +
                 "DUPLICATE KEY(k1, k2)\n" +
                 "COMMENT \"my first table\"\n" +
                 "PARTITION BY RANGE(k1)\n" +
@@ -63,7 +70,7 @@ public class DorisStatementParserTest extends TestCase {
                 "    PARTITION p2 VALUES LESS THAN (\"2020-03-01\"),\n" +
                 "    PARTITION p3 VALUES LESS THAN (\"2020-04-01\")\n" +
                 ")\n" +
-                "DISTRIBUTED BY HASH(k1) BUCKETS 32\n" +
+                "DISTRIBUTED BY HASH(k1, k2) BUCKETS 32\n" +
                 "PROPERTIES (\n" +
                 "    \"replication_num\" = \"1\"\n" +
                 ") as select * from test limit 10;";
@@ -71,6 +78,21 @@ public class DorisStatementParserTest extends TestCase {
         DorisStatementParser parser = new DorisStatementParser(ddl);
 //        DorisCreateTableStatement stmt = (DorisCreateTableStatement) SQLUtils.parseSingleStatement(ddl, DbType.doris);
         DorisCreateTableStatement stmt = (DorisCreateTableStatement) parser.parseCreateTable();
+
+        assertFalse(stmt.isExternal());
+        SQLColumnDefinition col4 = stmt.getColumn("k4");
+        assertEquals(new SQLIdentifierExpr("k4"), col4.getName());
+        assertEquals(col4.getDefaultExpr(), new SQLCharExpr("1"));
+        assertEquals(new SQLCharExpr("int column"), col4.getComment());
+        assertTrue(col4.containsNotNullConstaint());
+
+        assertEquals(true, stmt.getModel().isKey());
+        assertEquals("DUPLICATE", stmt.getModel().getType());
+
+        List<SQLSelectOrderByItem> modelColumns = new ArrayList<>();
+        modelColumns.add(new SQLSelectOrderByItem(new SQLIdentifierExpr("k1")));
+        modelColumns.add(new SQLSelectOrderByItem(new SQLIdentifierExpr("k2")));
+
         System.out.println(stmt.toString());
     }
 

@@ -143,6 +143,4 @@ public class DorisExprParser extends SQLExprParser {
 
         return super.parseColumnRest(column);
     }
-
-
 }

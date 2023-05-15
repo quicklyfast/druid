@@ -86,6 +86,4 @@ public class DorisStatementParser extends SQLStatementParser {
         return new DorisCreateTableParser(this.exprParser)
                 .parseCreateTable();
     }
-
-
 }

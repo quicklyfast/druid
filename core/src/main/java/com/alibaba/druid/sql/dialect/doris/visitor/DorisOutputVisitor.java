@@ -10,7 +10,6 @@ import com.alibaba.druid.sql.dialect.doris.ast.expr.DorisPropertiesExpr;
 import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateResourceStatement;
 import com.alibaba.druid.sql.dialect.doris.ast.statement.DorisCreateTableStatement;
 import com.alibaba.druid.sql.visitor.SQLASTOutputVisitor;
-import com.alibaba.druid.sql.visitor.VisitorFeature;
 
 import java.util.List;
 import java.util.Locale;
@@ -142,6 +141,12 @@ public class DorisOutputVisitor extends SQLASTOutputVisitor implements DorisASTV
     public boolean visit(DorisCreateTableStatement x) {
         printCreateTable(x, true);
 
+        SQLExpr engine = x.getEngine();
+        if (engine != null) {
+            print0(ucase ? " ENGINE = " : " engine = ");
+            engine.accept(this);
+        }
+
         SQLIndexDefinition model = x.getModel();
         if (model != null) {
             println();
@@ -164,11 +169,7 @@ public class DorisOutputVisitor extends SQLASTOutputVisitor implements DorisASTV
 
         if (x.getDistributeByType() != null) {
             println();
-            if (isEnabled(VisitorFeature.OutputDistributedLiteralInCreateTableStmt)) {
-                print0(ucase ? "DISTRIBUTED BY " : "distributed by ");
-            } else {
-                print0(ucase ? "DISTRIBUTE BY " : "distribute by ");
-            }
+            print0(ucase ? "DISTRIBUTED BY " : "distributed by ");
 
             SQLName distributeByType = x.getDistributeByType();
 
@@ -176,14 +177,15 @@ public class DorisOutputVisitor extends SQLASTOutputVisitor implements DorisASTV
                 print0(ucase ? "HASH(" : "hash(");
                 printAndAccept(x.getDistributeBy(), ",");
                 print0(")");
-
-            } else if ("BROADCAST".equalsIgnoreCase(distributeByType.getSimpleName())) {
-                print0(ucase ? "BROADCAST " : "broadcast ");
+            } else if ("RANDOM".equalsIgnoreCase(distributeByType.getSimpleName())) {
+                print0(ucase ? "RANDOM" : "random");
             }
 
-            print0(ucase ? " BUCKETS " : "buckets ");
-            int buckets = x.getBuckets();
-            print0(String.valueOf(buckets));
+            SQLExpr bucket = x.getBucket();
+            if (bucket != null) {
+                print0(ucase ? " BUCKETS " : " buckets ");
+                bucket.accept(this);
+            }
         }
 
         DorisPropertiesExpr properties = x.getPropertiesExpr();

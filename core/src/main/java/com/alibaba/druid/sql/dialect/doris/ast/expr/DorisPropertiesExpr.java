@@ -6,7 +6,6 @@ import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLExprImpl;
 import com.alibaba.druid.sql.ast.SQLReplaceable;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
-import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
 import com.alibaba.druid.sql.dialect.doris.visitor.DorisASTVisitor;
 import com.alibaba.druid.sql.visitor.SQLASTVisitor;
@@ -35,10 +34,10 @@ public class DorisPropertiesExpr extends SQLExprImpl implements DorisExpr, SQLRe
     }
 
     public void addProperties(String target, String value) {
-        addProperties(new SQLIdentifierExpr(target), new SQLCharExpr(value));
+        addProperties(new SQLCharExpr(target), new SQLCharExpr(value));
     }
 
-    public void addProperties(SQLIdentifierExpr target, SQLCharExpr value) {
+    public void addProperties(SQLCharExpr target, SQLCharExpr value) {
         properties.add(
                 new SQLAssignItem(target, value)
         );

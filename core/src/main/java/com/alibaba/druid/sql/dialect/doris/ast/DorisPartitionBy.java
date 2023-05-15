@@ -23,7 +23,6 @@ public class DorisPartitionBy extends SQLPartitionBy implements DorisObject {
 
     @Override
     protected void accept0(SQLASTVisitor v) {
-
     }
 
     @Override
@@ -33,6 +32,5 @@ public class DorisPartitionBy extends SQLPartitionBy implements DorisObject {
 
     @Override
     public void accept0(DorisASTVisitor visitor) {
-
     }
 }

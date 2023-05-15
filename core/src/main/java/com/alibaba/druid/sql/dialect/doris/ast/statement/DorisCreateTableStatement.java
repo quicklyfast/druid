@@ -1,12 +1,12 @@
 package com.alibaba.druid.sql.dialect.doris.ast.statement;
 
 import com.alibaba.druid.DbType;
+import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.statement.SQLCreateStatement;
 import com.alibaba.druid.sql.ast.statement.SQLCreateTableStatement;
 import com.alibaba.druid.sql.ast.statement.SQLDDLStatement;
-import com.alibaba.druid.sql.ast.statement.SQLSelect;
 import com.alibaba.druid.sql.dialect.doris.ast.expr.DorisPropertiesExpr;
 
 import java.util.ArrayList;
@@ -18,6 +18,8 @@ public class DorisCreateTableStatement extends SQLCreateTableStatement implement
 
     protected SQLName distributeByType;
     protected List<SQLName> distributeBy = new ArrayList<SQLName>();
+
+    protected SQLExpr bucket;
 
     public DorisCreateTableStatement() {
         this(DbType.doris);
@@ -72,8 +74,14 @@ public class DorisCreateTableStatement extends SQLCreateTableStatement implement
         distributeBy.add(x);
     }
 
-    @Override
-    public SQLSelect getSelect() {
-        return super.getSelect();
+    public SQLExpr getBucket() {
+        return bucket;
+    }
+
+    public void setBucket(SQLExpr x) {
+        if (x != null) {
+            x.setParent(this);
+        }
+        this.bucket = x;
     }
 }

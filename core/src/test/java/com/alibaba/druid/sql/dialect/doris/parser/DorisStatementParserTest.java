@@ -3,7 +3,6 @@ package com.alibaba.druid.sql.dialect.doris.parser;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
-import com.alibaba.druid.sql.ast.SQLIndexDefinition;
 import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.statement.SQLAssignItem;
@@ -76,9 +75,7 @@ public class DorisStatementParserTest extends TestCase {
                 ") as select * from test limit 10;";
 
         DorisStatementParser parser = new DorisStatementParser(ddl);
-//        DorisCreateTableStatement stmt = (DorisCreateTableStatement) SQLUtils.parseSingleStatement(ddl, DbType.doris);
         DorisCreateTableStatement stmt = (DorisCreateTableStatement) parser.parseCreateTable();
-
         assertFalse(stmt.isExternal());
         SQLColumnDefinition col4 = stmt.getColumn("k4");
         assertEquals(new SQLIdentifierExpr("k4"), col4.getName());

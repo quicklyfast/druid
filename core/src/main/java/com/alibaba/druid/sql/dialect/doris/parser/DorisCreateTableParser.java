@@ -176,7 +176,6 @@ public class DorisCreateTableParser extends SQLCreateTableParser {
                 lexer.nextToken();
                 SQLExpr bucket = exprParser.expr();
                 ((DorisCreateTableStatement) stmt).setBucket(bucket);
-                lexer.nextToken();
             }
         }
 

@@ -18,10 +18,14 @@ package com.alibaba.druid.bvt.sql.oracle.pl;
 import com.alibaba.druid.sql.OracleTest;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
+import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
 import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class Oracle_pl_1 extends OracleTest {
     public void test_0() throws Exception {
@@ -49,7 +53,7 @@ public class Oracle_pl_1 extends OracleTest {
                 " \n" +
                 "  COMMIT;\n" +
                 "  DBMS_OUTPUT.PUT_LINE (emp_first_name || ' ' || emp_last_name);\n" +
-                "END;"; //
+                "END;";
 
         List<SQLStatement> statementList = SQLUtils.parseStatements(sql, JdbcConstants.ORACLE);
         assertEquals(3, statementList.size());
@@ -68,14 +72,14 @@ public class Oracle_pl_1 extends OracleTest {
 
         assertEquals(2, visitor.getTables().size());
 
-//        Assert.assertTrue(visitor.getTables().containsKey(new TableStat.Name("employees")));
-//        Assert.assertTrue(visitor.getTables().containsKey(new TableStat.Name("emp_name")));
+//        assertTrue(visitor.getTables().containsKey(new TableStat.Name("employees")));
+//        assertTrue(visitor.getTables().containsKey(new TableStat.Name("emp_name")));
 
-//        Assert.assertEquals(7, visitor.getColumns().size());
-//        Assert.assertEquals(3, visitor.getConditions().size());
-//        Assert.assertEquals(1, visitor.getRelationships().size());
+//        assertEquals(7, visitor.getColumns().size());
+//        assertEquals(3, visitor.getConditions().size());
+//        assertEquals(1, visitor.getRelationships().size());
 
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
 
         {
             String output = SQLUtils.toOracleString(stmt);
@@ -117,5 +121,44 @@ public class Oracle_pl_1 extends OracleTest {
                             "end;", //
                     output);
         }
+    }
+
+    public void test_1() {
+        String sql = "DECLARE\n" +
+                     "  acct_id INTEGER(4) NOT NULL := 9999;\n" +
+                     "  a NATURALN                  := 9999;\n" +
+                     "  b POSITIVEN                 := 9999;\n" +
+                     "  c SIMPLE_INTEGER            := 9999;\n" +
+                     "BEGIN\n" +
+                     "  NULL;\n" +
+                     "END;";
+
+        OracleStatementParser parser = new OracleStatementParser(sql);
+        List<SQLStatement> statementList = parser.parseStatementList();
+        SQLStatement statement = statementList.get(0);
+        print(statementList);
+
+        assertEquals(1, statementList.size());
+
+        assertEquals("DECLARE\n" +
+                            "\tacct_id INTEGER(4) NOT NULL := 9999;\n" +
+                            "\ta NATURALN := 9999;\n" +
+                            "\tb POSITIVEN := 9999;\n" +
+                            "\tc SIMPLE_INTEGER := 9999;\n" +
+                            "BEGIN\n" +
+                            "\tNULL;\n" +
+                            "END;", SQLUtils.toSQLString(statement, JdbcConstants.ORACLE));
+
+        OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
+        statement.accept(visitor);
+
+        System.out.println("Tables : " + visitor.getTables());
+        System.out.println("fields : " + visitor.getColumns());
+        System.out.println("conditions : " + visitor.getConditions());
+        System.out.println("relationships : " + visitor.getRelationships());
+        System.out.println("orderBy : " + visitor.getOrderByColumns());
+
+        assertEquals(0, visitor.getTables().size());
+        assertEquals(0, visitor.getColumns().size());
     }
 }

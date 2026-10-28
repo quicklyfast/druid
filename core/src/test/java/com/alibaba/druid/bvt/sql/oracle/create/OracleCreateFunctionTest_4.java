@@ -24,6 +24,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateFunctionTest_4 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -71,8 +73,8 @@ public class OracleCreateFunctionTest_4 extends OracleTest {
         assertEquals(1, statementList.size());
 
         assertEquals("FUNCTION SPLITSTR (\n" +
-                        "\tSTR IN CLOB, \n" +
-                        "\tI IN NUMBER := 0, \n" +
+                        "\tSTR IN CLOB,\n" +
+                        "\tI IN NUMBER := 0,\n" +
                         "\tSEP IN VARCHAR2 := ','\n" +
                         ")\n" +
                         "RETURN VARCHAR2DETERMINISTIC \n" +
@@ -82,7 +84,7 @@ public class OracleCreateFunctionTest_4 extends OracleTest {
                         "BEGIN\n" +
                         "\tIF I = 0 THEN\n" +
                         "\t\tT_STR := STR;\n" +
-                        "\tELSE IF INSTR(STR, SEP) = 0 THEN\n" +
+                        "\tELSIF INSTR(STR, SEP) = 0 THEN\n" +
                         "\t\tT_STR := SEP;\n" +
                         "\tELSE\n" +
                         "\t\tSELECT COUNT(*)\n" +
@@ -99,7 +101,7 @@ public class OracleCreateFunctionTest_4 extends OracleTest {
                         "\t\tEND IF;\n" +
                         "\tEND IF;\n" +
                         "\tRETURN T_STR;\n" +
-                        "END;",//
+                        "END;",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();

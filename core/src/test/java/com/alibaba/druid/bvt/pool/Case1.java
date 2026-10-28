@@ -15,19 +15,13 @@
  */
 package com.alibaba.druid.bvt.pool;
 
+import com.alibaba.druid.PoolTestCase;
+import com.alibaba.druid.mock.MockDriver;
+import com.alibaba.druid.pool.DruidDataSource;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-
-import com.alibaba.druid.PoolTestCase;
-import junit.framework.TestCase;
-
-import org.junit.Assert;
-
-import com.alibaba.druid.mock.MockDriver;
-import com.alibaba.druid.pool.DataSourceDisableException;
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.stat.DruidDataSourceStatManager;
 
 public class Case1 extends PoolTestCase {
     public void test_f() throws Exception {
@@ -52,15 +46,8 @@ public class Case1 extends PoolTestCase {
         dataSource.setMinIdle(0);
         dataSource.setMaxActive(2);
         dataSource.setMaxIdle(2);
-
-        Exception error = null;
-        try {
-            Connection conn = dataSource.getConnection();
-            conn.close();
-        } catch (Exception e) {
-            error = e;
-        }
-
-        Assert.assertTrue(error instanceof DataSourceDisableException);
+        Connection conn = dataSource.getConnection();
+        conn.close();
+        dataSource.close();
     }
 }

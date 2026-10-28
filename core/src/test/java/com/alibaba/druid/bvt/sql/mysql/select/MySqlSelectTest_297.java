@@ -20,6 +20,8 @@ import com.alibaba.druid.sql.MysqlTest;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_297
         extends MysqlTest {
     public void test_0() throws Exception {
@@ -33,9 +35,8 @@ public class MySqlSelectTest_297
                 "\t, ip, owner, gmt_create\n" +
                 "FROM resource_instance\n" +
                 "WHERE type = 16\n" +
-                "\tAND properties -> '$.idkp' = '1647796581073291'", stmt.toString());
+                "\tAND (properties -> '$.idkp' = '1647796581073291')", stmt.toString());
     }
-
 
     public void test_1() throws Exception {
         String sql = "select `current_date`, 1 + `current_date`";

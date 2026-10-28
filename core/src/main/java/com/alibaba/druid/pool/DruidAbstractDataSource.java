@@ -24,6 +24,7 @@ import com.alibaba.druid.pool.vendor.NullExceptionSorter;
 import com.alibaba.druid.proxy.jdbc.ConnectionProxyImpl;
 import com.alibaba.druid.proxy.jdbc.DataSourceProxy;
 import com.alibaba.druid.proxy.jdbc.TransactionInfo;
+import com.alibaba.druid.stat.DataSourceMonitorable;
 import com.alibaba.druid.stat.JdbcDataSourceStat;
 import com.alibaba.druid.stat.JdbcSqlStat;
 import com.alibaba.druid.stat.JdbcStatManager;
@@ -59,7 +60,8 @@ import static com.alibaba.druid.util.JdbcConstants.POSTGRESQL_DRIVER;
  * @author wenshao [szujobs@hotmail.com]
  * @author ljw [ljw2083@alibaba-inc.com]
  */
-public abstract class DruidAbstractDataSource extends WrapperAdapter implements DruidAbstractDataSourceMBean, DataSource, DataSourceProxy, Serializable {
+public abstract class DruidAbstractDataSource extends WrapperAdapter implements DruidAbstractDataSourceMBean, DataSource,
+    DataSourceProxy, Serializable, DataSourceMonitorable {
     private static final long serialVersionUID = 1L;
     private static final Log LOG = LogFactory.getLog(DruidAbstractDataSource.class);
 
@@ -129,7 +131,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile int connectTimeout; // milliSeconds
     protected volatile int socketTimeout; // milliSeconds
     private volatile String connectTimeoutStr;
-    private volatile String socketTimeoutSr;
+    private volatile String socketTimeoutStr;
 
     protected volatile int queryTimeout; // seconds
     protected volatile int transactionQueryTimeout; // seconds
@@ -185,20 +187,23 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile long cachedPreparedStatementCount;
     protected volatile long cachedPreparedStatementDeleteCount;
     protected volatile long cachedPreparedStatementMissCount;
+    protected volatile long userPasswordVersion;
 
     private volatile FilterChainImpl filterChain;
 
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> errorCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "errorCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> dupCloseCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "dupCloseCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> startTransactionCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "startTransactionCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> commitCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "commitCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> rollbackCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "rollbackCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> cachedPreparedStatementHitCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementHitCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> preparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "preparedStatementCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> closedPreparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "closedPreparedStatementCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> cachedPreparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> cachedPreparedStatementDeleteCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementDeleteCount");
-    static final AtomicLongFieldUpdater<DruidAbstractDataSource> cachedPreparedStatementMissCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementMissCount");
+    static final AtomicLongFieldUpdater<DruidAbstractDataSource>
+            errorCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "errorCount"),
+            dupCloseCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "dupCloseCount"),
+            startTransactionCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "startTransactionCount"),
+            commitCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "commitCount"),
+            rollbackCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "rollbackCount"),
+            cachedPreparedStatementHitCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementHitCount"),
+            preparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "preparedStatementCount"),
+            closedPreparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "closedPreparedStatementCount"),
+            cachedPreparedStatementCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementCount"),
+            cachedPreparedStatementDeleteCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementDeleteCount"),
+            cachedPreparedStatementMissCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "cachedPreparedStatementMissCount"),
+            userPasswordVersionUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "userPasswordVersion");
     protected static final AtomicReferenceFieldUpdater<DruidAbstractDataSource, FilterChainImpl> filterChainUpdater
             = AtomicReferenceFieldUpdater.newUpdater(DruidAbstractDataSource.class, FilterChainImpl.class, "filterChain");
 
@@ -254,7 +259,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     static final AtomicLongFieldUpdater<DruidAbstractDataSource> destroyCountUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "destroyCount");
     static final AtomicLongFieldUpdater<DruidAbstractDataSource> createStartNanosUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "createStartNanos");
 
-    private Boolean useUnfairLock;
     private boolean useLocalSessionState = true;
     private boolean keepConnectionUnderlyingTransactionIsolation;
 
@@ -368,7 +372,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     }
 
     public void setUseUnfairLock(boolean useUnfairLock) {
-        if (lock.isFair() == !useUnfairLock && this.useUnfairLock != null) {
+        if (lock.isFair() == !useUnfairLock) {
             return;
         }
 
@@ -380,8 +384,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
                     this.lock = new ReentrantLock(!useUnfairLock);
                     this.notEmpty = this.lock.newCondition();
                     this.empty = this.lock.newCondition();
-
-                    this.useUnfairLock = useUnfairLock;
                 }
             } finally {
                 lock.unlock();
@@ -515,6 +517,14 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     public void incrementCachedPreparedStatementMissCount() {
         cachedPreparedStatementMissCountUpdater.incrementAndGet(this);
+    }
+
+    protected void incrementUserPasswordVersion() {
+        userPasswordVersionUpdater.incrementAndGet(this);
+    }
+
+    protected long getUserPasswordVersion() {
+        return userPasswordVersionUpdater.get(this);
     }
 
     public long getCachedPreparedStatementMissCount() {
@@ -1049,7 +1059,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
      */
     public void setSocketTimeout(int milliSeconds) {
         this.socketTimeout = milliSeconds;
-        this.socketTimeoutSr = null;
+        this.socketTimeoutStr = null;
     }
 
     protected void setSocketTimeout(String milliSeconds) {
@@ -1058,7 +1068,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         } catch (Exception ignored) {
             // ignored
         }
-        this.socketTimeoutSr = null;
+        this.socketTimeoutStr = null;
     }
 
     public String getName() {
@@ -1085,20 +1095,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     public void setMaxWait(long maxWaitMillis) {
         if (maxWaitMillis == this.maxWait) {
             return;
-        }
-
-        if (maxWaitMillis > 0 && useUnfairLock == null && !this.inited) {
-            final ReentrantLock lock = this.lock;
-            lock.lock();
-            try {
-                if ((!this.inited) && (!lock.isFair())) {
-                    this.lock = new ReentrantLock(true);
-                    this.notEmpty = this.lock.newCondition();
-                    this.empty = this.lock.newCondition();
-                }
-            } finally {
-                lock.unlock();
-            }
         }
 
         if (inited) {
@@ -1751,28 +1747,49 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
                 if (connectTimeoutStr == null) {
                     connectTimeoutStr = Integer.toString(connectTimeout);
                 }
-
                 physicalConnectProperties.put("connectTimeout", connectTimeoutStr);
             } else if (isOracle) {
                 if (connectTimeoutStr == null) {
                     connectTimeoutStr = Integer.toString(connectTimeout);
                 }
-
                 physicalConnectProperties.put("oracle.net.CONNECT_TIMEOUT", connectTimeoutStr);
             } else if (driver != null && POSTGRESQL_DRIVER.equals(driver.getClass().getName())) {
                 // see https://github.com/pgjdbc/pgjdbc/blob/2b90ad04696324d107b65b085df4b1db8f6c162d/README.md
-                physicalConnectProperties.put("loginTimeout", Long.toString(TimeUnit.MILLISECONDS.toSeconds(connectTimeout)));
-                physicalConnectProperties.put("connectTimeout", Long.toString(TimeUnit.MILLISECONDS.toSeconds(connectTimeout)));
-                if (socketTimeout > 0) {
-                    physicalConnectProperties.put("socketTimeout", Long.toString(TimeUnit.MILLISECONDS.toSeconds(socketTimeout)));
+                if (connectTimeoutStr == null) {
+                    connectTimeoutStr = Long.toString(TimeUnit.MILLISECONDS.toSeconds(connectTimeout));
                 }
+                physicalConnectProperties.put("loginTimeout", connectTimeoutStr);
+                physicalConnectProperties.put("connectTimeout", connectTimeoutStr);
             } else if (dbTypeName != null && DbType.sqlserver.name().equals(dbTypeName)) {
                 // see https://learn.microsoft.com/en-us/sql/connect/jdbc/setting-the-connection-properties?view=sql-server-ver16
-                physicalConnectProperties.put("loginTimeout", Long.toString(TimeUnit.MILLISECONDS.toSeconds(connectTimeout)));
-                if (socketTimeout > 0) {
-                    // As SQLServer-jdbc-driver 6.1.2 can use this, see https://github.com/microsoft/mssql-jdbc/wiki/SocketTimeout
-                    physicalConnectProperties.put("socketTimeout", Integer.toString(socketTimeout));
+                if (connectTimeoutStr == null) {
+                    connectTimeoutStr = Long.toString(TimeUnit.MILLISECONDS.toSeconds(connectTimeout));
                 }
+                physicalConnectProperties.put("loginTimeout", connectTimeoutStr);
+            }
+        }
+
+        if (socketTimeout > 0) {
+            if (isOracle) {
+                // https://docs.oracle.com/cd/E21454_01/html/821-2594/cnfg_oracle-env_r.html
+                if (socketTimeoutStr == null) {
+                    socketTimeoutStr = Integer.toString(socketTimeout);
+                }
+                // oracle.jdbc.ReadTimeout for jdbc versions >=10.1.0.5
+                physicalConnectProperties.put("oracle.jdbc.ReadTimeout", socketTimeoutStr);
+                // oracle.net.READ_TIMEOUT for jdbc versions < 10.1.0.5
+                physicalConnectProperties.put("oracle.net.READ_TIMEOUT", socketTimeoutStr);
+            } else if (driver != null && POSTGRESQL_DRIVER.equals(driver.getClass().getName())) {
+                if (socketTimeoutStr == null) {
+                    socketTimeoutStr = Long.toString(TimeUnit.MILLISECONDS.toSeconds(socketTimeout));
+                }
+                physicalConnectProperties.put("socketTimeout", socketTimeoutStr);
+            } else if (dbTypeName != null && DbType.sqlserver.name().equals(dbTypeName)) {
+                // As SQLServer-jdbc-driver 6.1.2 can use this, see https://github.com/microsoft/mssql-jdbc/wiki/SocketTimeout
+                if (socketTimeoutStr == null) {
+                    socketTimeoutStr = Integer.toString(socketTimeout);
+                }
+                physicalConnectProperties.put("socketTimeout", socketTimeoutStr);
             }
         }
 
@@ -1994,11 +2011,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     public abstract int getActivePeak();
 
+    @Override
     public CompositeDataSupport getCompositeData() throws JMException {
-        JdbcDataSourceStat stat = this.getDataSourceStat();
-
         Map<String, Object> map = new HashMap<String, Object>();
-
         map.put("ID", getID());
         map.put("URL", this.getUrl());
         map.put("Name", this.getName());
@@ -2019,7 +2034,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         map.put("ConnectionRollbackCount", getRollbackCount());
 
         // 5 - 9
-        map.put("ConnectionConnectLastTime", stat.getConnectionStat().getConnectLastTime());
         map.put("ConnectionConnectErrorCount", this.getCreateCount());
         if (createError != null) {
             map.put("ConnectionConnectErrorLastTime", getLastCreateErrorTime());
@@ -2031,6 +2045,22 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             map.put("ConnectionConnectErrorLastStackTrace", null);
         }
 
+        // 35 - 39
+        map.put("ConnectionConnectCount", this.getConnectCount());
+        if (createError != null) {
+            map.put("ConnectionErrorLastMessage", createError.getMessage());
+            map.put("ConnectionErrorLastStackTrace", Utils.getStackTrace(createError));
+        } else {
+            map.put("ConnectionErrorLastMessage", null);
+            map.put("ConnectionErrorLastStackTrace", null);
+        }
+
+        fillStatDataToMap(getDataSourceStat(), map);
+        return new CompositeDataSupport(JdbcStatManager.getDataSourceCompositeType(), map);
+    }
+
+    public static void fillStatDataToMap(final JdbcDataSourceStat stat, final Map<String, Object> map) {
+        map.put("ConnectionConnectLastTime", stat.getConnectionStat().getConnectLastTime());
         // 10 - 14
         map.put("StatementCreateCount", stat.getStatementStat().getCreateCount());
         map.put("StatementPrepareCount", stat.getStatementStat().getPrepareCount());
@@ -2066,15 +2096,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         map.put("ResultSetLastErrorMessage", null);
         map.put("ResultSetLastErrorStackTrace", null);
 
-        // 35 - 39
-        map.put("ConnectionConnectCount", this.getConnectCount());
-        if (createError != null) {
-            map.put("ConnectionErrorLastMessage", createError.getMessage());
-            map.put("ConnectionErrorLastStackTrace", Utils.getStackTrace(createError));
-        } else {
-            map.put("ConnectionErrorLastMessage", null);
-            map.put("ConnectionErrorLastStackTrace", null);
-        }
         map.put("ConnectionConnectMillisTotal", stat.getConnectionStat().getConnectMillis());
         map.put("ConnectionConnectingCountMax", stat.getConnectionStat().getConnectingMax());
 
@@ -2086,8 +2107,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
         map.put("ConnectionHistogram", stat.getConnectionHistogramValues());
         map.put("StatementHistogram", stat.getStatementStat().getHistogramValues());
-
-        return new CompositeDataSupport(JdbcStatManager.getDataSourceCompositeType(), map);
     }
 
     public long getID() {
@@ -2133,7 +2152,8 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         to.password = this.password;
         to.jdbcUrl = this.jdbcUrl;
         to.driverClass = this.driverClass;
-        to.connectProperties = this.connectProperties;
+        to.connectProperties = new Properties();
+        to.connectProperties.putAll(this.connectProperties);
         to.passwordCallback = this.passwordCallback;
         to.userCallback = this.userCallback;
         to.initialSize = this.initialSize;
@@ -2182,7 +2202,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         to.destroyScheduler = this.destroyScheduler;
         to.socketTimeout = this.socketTimeout;
         to.connectTimeout = this.connectTimeout;
-        to.socketTimeoutSr = this.socketTimeoutSr;
+        to.socketTimeoutStr = this.socketTimeoutStr;
         to.connectTimeoutStr = this.connectTimeoutStr;
     }
 

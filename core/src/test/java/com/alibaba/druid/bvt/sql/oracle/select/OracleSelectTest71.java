@@ -20,9 +20,10 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleSelectTest71 extends OracleTest {
     public void test_0() throws Exception {
@@ -44,14 +45,14 @@ public class OracleSelectTest71 extends OracleTest {
                         "    AND A.SIM_NO LIKE '%'||?||'%' \n" +
                         "  order by A.SIM_NO ASC ) a\n" +
                         "\n" +
-                        "  ) where rn > ?*(?-1) and rn <= ?*?"; //
+                        "  ) where rn > ?*(?-1) and rn <= ?*?";
 
         OracleStatementParser parser = new OracleStatementParser(sql);
         List<SQLStatement> statementList = parser.parseStatementList();
         SQLStatement stmt = statementList.get(0);
         print(statementList);
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
         stmt.accept(visitor);
@@ -83,15 +84,42 @@ public class OracleSelectTest71 extends OracleTest {
                     "\t\tLEFT JOIN BAS_VEHICLE D ON B.VECL_ID = D.ID \n" +
                     "\t\t\tLEFT JOIN BAS_APPLICATION E ON A.APP_ID = E.ID \n" +
                     "\t\tWHERE 1 = 1\n" +
-                    "\t\t\tAND A.SIM_NO LIKE ('%' || ? || '%')\n" +
+                    "\t\t\tAND A.SIM_NO LIKE '%' || ? || '%'\n" +
                     "\t\tORDER BY A.SIM_NO ASC\n" +
                     "\t) a\n" +
                     ")\n" +
                     "WHERE rn > ? * (? - 1)\n" +
                     "\tAND rn <= ? * ?", text);
         }
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("acduser.vw_acd_info", "xzqh")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("acduser.vw_acd_info", "xzqh")));
 
-        // Assert.assertTrue(visitor.getOrderByColumns().contains(new TableStat.Column("employees", "last_name")));
+        // assertTrue(visitor.getOrderByColumns().contains(new TableStat.Column("employees", "last_name")));
+    }
+
+    public void testSelectWithJoin_UnderParen() {
+        String sql = "SELECT\n" +
+                     "    A.ID,\n" +
+                     "    B.NAME,\n" +
+                     "    C.TYPE\n" +
+                     "FROM\n" +
+                     "    tbl_name1 A\n" +
+                     "    LEFT JOIN (tbl_name2 B)\n" +
+                     "    ON A.ID = B.ID\n" +
+                     "    LEFT JOIN (tbl_name3 C)\n" +
+                     "    ON A.ID = C.ID\n" +
+                     "    AND A.NAME = B.NAME";
+
+        OracleStatementParser parser = new OracleStatementParser(sql);
+        List<SQLStatement> statementList = parser.parseStatementList();
+        SQLStatement statement = statementList.get(0);
+        print(statementList);
+
+        assertEquals(1, statementList.size());
+
+        OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
+        statement.accept(visitor);
+
+        assertEquals(3, visitor.getTables().size());
+        assertEquals(6, visitor.getColumns().size());
     }
 }

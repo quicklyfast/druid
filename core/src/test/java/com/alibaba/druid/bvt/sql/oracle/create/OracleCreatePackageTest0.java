@@ -21,9 +21,10 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
 import com.alibaba.druid.util.JdbcConstants;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleCreatePackageTest0 extends OracleTest {
     public void test_types() throws Exception {
@@ -106,18 +107,18 @@ public class OracleCreatePackageTest0 extends OracleTest {
         SQLStatement stmt = statementList.get(0);
         print(statementList);
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
-        Assert.assertEquals("CREATE OR REPLACE PACKAGE BODY emp_mgmt\n" +
+        assertEquals("CREATE OR REPLACE PACKAGE BODY emp_mgmt\n" +
                         "BEGIN\n" +
                         "\ttot_emps NUMBER;\n" +
                         "\ttot_depts NUMBER;\n" +
                         "\tFUNCTION hire (\n" +
-                        "\t\tlast_name VARCHAR2, \n" +
-                        "\t\tjob_id VARCHAR2, \n" +
-                        "\t\tmanager_id NUMBER, \n" +
-                        "\t\tsalary NUMBER, \n" +
-                        "\t\tcommission_pct NUMBER, \n" +
+                        "\t\tlast_name VARCHAR2,\n" +
+                        "\t\tjob_id VARCHAR2,\n" +
+                        "\t\tmanager_id NUMBER,\n" +
+                        "\t\tsalary NUMBER,\n" +
+                        "\t\tcommission_pct NUMBER,\n" +
                         "\t\tdepartment_id NUMBER\n" +
                         "\t)\n" +
                         "\tRETURN NUMBER\n" +
@@ -132,10 +133,10 @@ public class OracleCreatePackageTest0 extends OracleTest {
                         "\t\t\t, '18-JUN-02', 'IT_PROG', 90000000, 0, 100\n" +
                         "\t\t\t, 110);\n" +
                         "\t\ttot_emps := tot_emps + 1;\n" +
-                        "\t\tRETURN new_empno;\n" +
+                        "\t\tRETURN (new_empno);\n" +
                         "\tEND;\n" +
                         "\tFUNCTION create_dept (\n" +
-                        "\t\tdepartment_id NUMBER, \n" +
+                        "\t\tdepartment_id NUMBER,\n" +
                         "\t\tlocation_id NUMBER\n" +
                         "\t)\n" +
                         "\tRETURN NUMBER\n" +
@@ -148,7 +149,7 @@ public class OracleCreatePackageTest0 extends OracleTest {
                         "\t\tINSERT INTO departments\n" +
                         "\t\tVALUES (new_deptno, 'department name', 100, 1700);\n" +
                         "\t\ttot_depts := tot_depts + 1;\n" +
-                        "\t\tRETURN new_deptno;\n" +
+                        "\t\tRETURN (new_deptno);\n" +
                         "\tEND;\n" +
                         "\tPROCEDURE remove_emp (\n" +
                         "\t\temployee_id NUMBER\n" +
@@ -208,7 +209,7 @@ public class OracleCreatePackageTest0 extends OracleTest {
                         "\t\t\tSET commission_pct = commission_pct + comm_incr;\n" +
                         "\t\tEND IF;\n" +
                         "\tEND;\n" +
-                        "END emp_mgmt;",//
+                        "END emp_mgmt;",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
@@ -220,14 +221,14 @@ public class OracleCreatePackageTest0 extends OracleTest {
         System.out.println("relationships : " + visitor.getRelationships());
         System.out.println("orderBy : " + visitor.getOrderByColumns());
 
-        Assert.assertEquals(2, visitor.getTables().size());
+        assertEquals(2, visitor.getTables().size());
 
-        Assert.assertEquals(5, visitor.getColumns().size());
+        assertEquals(5, visitor.getColumns().size());
 
-        Assert.assertTrue(visitor.containsColumn("employees", "employee_id"));
-        Assert.assertTrue(visitor.containsColumn("employees", "*"));
-        Assert.assertTrue(visitor.containsColumn("departments", "department_id"));
-        Assert.assertTrue(visitor.containsColumn("employees", "salary"));
-        Assert.assertTrue(visitor.containsColumn("employees", "commission_pct"));
+        assertTrue(visitor.containsColumn("employees", "employee_id"));
+        assertTrue(visitor.containsColumn("employees", "*"));
+        assertTrue(visitor.containsColumn("departments", "department_id"));
+        assertTrue(visitor.containsColumn("employees", "salary"));
+        assertTrue(visitor.containsColumn("employees", "commission_pct"));
     }
 }

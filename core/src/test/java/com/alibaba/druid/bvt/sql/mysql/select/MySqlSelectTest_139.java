@@ -10,6 +10,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_139 extends MysqlTest {
     public void test_0() throws Exception {
         String sql = "select (tinyint_test/tinyint_1bit_test)\n" +
@@ -22,13 +24,11 @@ public class MySqlSelectTest_139 extends MysqlTest {
 
         assertEquals(1, statementList.size());
 
-        assertEquals("SELECT tinyint_test / tinyint_1bit_test = mediumint_test = decimal_test / double_test\n" +
+        assertEquals("SELECT (tinyint_test / tinyint_1bit_test) = mediumint_test = decimal_test / double_test\n" +
                 "FROM corona_one_db_one_tb", stmt.toString());
 
-        assertEquals("SELECT tinyint_test / tinyint_1bit_test = mediumint_test = decimal_test / double_test\n" +
-                        "FROM corona_one_db_one_tb"
-                , ParameterizedOutputVisitorUtils.parameterize(sql, JdbcConstants.MYSQL, VisitorFeature.OutputParameterizedZeroReplaceNotUseOriginalSql));
+        assertEquals("SELECT (tinyint_test / tinyint_1bit_test) = mediumint_test = decimal_test / double_test\n" +
+                        "FROM corona_one_db_one_tb",
+                ParameterizedOutputVisitorUtils.parameterize(sql, JdbcConstants.MYSQL, VisitorFeature.OutputParameterizedZeroReplaceNotUseOriginalSql));
     }
-
-
 }

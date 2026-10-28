@@ -18,7 +18,6 @@ package com.alibaba.druid.sql.dialect.odps.parser;
 import com.alibaba.druid.sql.ast.ClusteringType;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
-import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInputOutputFormat;
 import com.alibaba.druid.sql.dialect.odps.ast.OdpsCreateTableStatement;
@@ -37,11 +36,14 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
         super(exprParser);
     }
 
-    public SQLCreateTableStatement parseCreateTable(boolean acceptCreate) {
+    public SQLCreateTableStatement parseCreateTable() {
         OdpsCreateTableStatement stmt = new OdpsCreateTableStatement();
 
-        if (acceptCreate) {
-            accept(Token.CREATE);
+        accept(Token.CREATE);
+
+        if (lexer.nextIf(Token.OR)) {
+            accept(Token.REPLACE);
+            stmt.config(SQLCreateTableStatement.Feature.OrReplace);
         }
 
         if (lexer.identifierEquals(FnvHash.Constants.EXTERNAL)) {
@@ -56,7 +58,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
             accept(Token.NOT);
             accept(Token.EXISTS);
 
-            stmt.setIfNotExiists(true);
+            stmt.setIfNotExists(true);
         }
 
         stmt.setName(this.exprParser.name());
@@ -72,14 +74,14 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
 
         for (; ; ) {
             if (lexer.identifierEquals(FnvHash.Constants.TBLPROPERTIES)) {
-                parseTblProperties(stmt);
+                parseOptions(stmt);
 
                 continue;
             }
 
             if (lexer.identifierEquals(FnvHash.Constants.LIFECYCLE)) {
                 lexer.nextToken();
-                stmt.setLifecycle(this.exprParser.expr());
+                stmt.setLifeCycle(this.exprParser.expr());
 
                 continue;
             }
@@ -204,6 +206,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
                     case FETCH:
                     case OVER:
                     case DATABASE:
+                    case FUNCTION:
                         column = this.exprParser.parseColumn(stmt);
                         break;
                     default:
@@ -279,6 +282,15 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
 
                 accept(Token.RPAREN);
                 continue;
+            }
+
+            if (lexer.nextIfIdentifier("AUTO")) {
+                accept(Token.PARTITIONED);
+                accept(Token.BY);
+                accept(Token.LPAREN);
+                stmt.setAutoPartitionedBy(
+                        this.exprParser.aliasedExpr());
+                accept(Token.RPAREN);
             }
 
             if (lexer.identifierEquals(FnvHash.Constants.RANGE)) {
@@ -363,8 +375,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
                 lexer.nextToken();
 
                 if (lexer.token() == Token.LITERAL_INT) {
-                    stmt.setIntoBuckets(
-                            new SQLIntegerExpr(lexer.integerValue().intValue()));
+                    stmt.setBuckets(lexer.integerValue().intValue());
                     lexer.nextToken();
                     acceptIdentifier("BUCKETS");
                 } else {
@@ -385,7 +396,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
 
             if (lexer.identifierEquals(FnvHash.Constants.LIFECYCLE)) {
                 lexer.nextToken();
-                stmt.setLifecycle(this.exprParser.expr());
+                stmt.setLifeCycle(this.exprParser.expr());
                 continue;
             }
 
@@ -418,7 +429,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
 
             if (lexer.identifierEquals(FnvHash.Constants.LIFECYCLE)) {
                 lexer.nextToken();
-                stmt.setLifecycle(this.exprParser.expr());
+                stmt.setLifeCycle(this.exprParser.expr());
                 continue;
             }
 
@@ -432,7 +443,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
             }
 
             if (lexer.identifierEquals(FnvHash.Constants.TBLPROPERTIES)) {
-                parseTblProperties(stmt);
+                parseOptions(stmt);
                 continue;
             }
 
@@ -444,7 +455,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
             }
 
             if (lexer.identifierEquals(FnvHash.Constants.TBLPROPERTIES)) {
-                parseTblProperties(stmt);
+                parseOptions(stmt);
                 continue;
             }
 
@@ -457,7 +468,7 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
 
             if (lexer.identifierEquals(FnvHash.Constants.LIFECYCLE)) {
                 lexer.nextToken();
-                stmt.setLifecycle(this.exprParser.expr());
+                stmt.setLifeCycle(this.exprParser.expr());
                 continue;
             }
 
@@ -465,28 +476,5 @@ public class OdpsCreateTableParser extends SQLCreateTableParser {
         }
 
         return stmt;
-    }
-
-    private void parseTblProperties(OdpsCreateTableStatement stmt) {
-        acceptIdentifier("TBLPROPERTIES");
-        accept(Token.LPAREN);
-
-        for (; ; ) {
-            String name = lexer.stringVal();
-            lexer.nextToken();
-            accept(Token.EQ);
-            SQLExpr value = this.exprParser.primary();
-            stmt.addTblProperty(name, value);
-            if (lexer.token() == Token.COMMA) {
-                lexer.nextToken();
-                if (lexer.token() == Token.RPAREN) {
-                    break;
-                }
-                continue;
-            }
-            break;
-        }
-
-        accept(Token.RPAREN);
     }
 }

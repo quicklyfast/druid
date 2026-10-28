@@ -9,6 +9,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_134 extends MysqlTest {
     public void test_0() throws Exception {
         String sql = "/*TDDL:RETRY_ERROR_SQL_ON_OLD_SERVER=FALSE*/\n" +
@@ -18,14 +20,14 @@ public class MySqlSelectTest_134 extends MysqlTest {
 
         List<SQLStatement> statementList = SQLUtils.parseStatements(sql, JdbcConstants.MYSQL);
         SQLSelectStatement stmt = (SQLSelectStatement) statementList.get(0);
-
+        System.out.println(stmt.toString());
         assertEquals(1, statementList.size());
 
         assertEquals("/*TDDL:RETRY_ERROR_SQL_ON_OLD_SERVER=FALSE*/\n" +
-                "SELECT 'b' NOT BETWEEN 'a' AND 'x-3', WEIGHT_STRING('ab' AS CHAR(4)) IS NOT UNKNOWN\n" +
+                "SELECT ('b' NOT BETWEEN 'a' AND 'x-3'), ((WEIGHT_STRING('ab' AS CHAR(4))) IS NOT UNKNOWN)\n" +
                 "FROM select_base_two_one_db_one_tb", stmt.toString());
 
-        assertEquals("SELECT ? NOT BETWEEN ? AND ?, WEIGHT_STRING(? AS CHAR(4)) IS NOT UNKNOWN\n" +
+        assertEquals("SELECT (? NOT BETWEEN ? AND ?), ((WEIGHT_STRING(? AS CHAR(4))) IS NOT UNKNOWN)\n" +
                 "FROM select_base_two_one_db_one_tb", ParameterizedOutputVisitorUtils.parameterize(sql, JdbcConstants.MYSQL));
     }
 

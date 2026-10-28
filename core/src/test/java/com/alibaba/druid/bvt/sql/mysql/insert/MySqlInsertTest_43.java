@@ -15,17 +15,18 @@
  */
 package com.alibaba.druid.bvt.sql.mysql.insert;
 
-import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.expr.SQLNumberExpr;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.alibaba.druid.sql.parser.SQLParserFeature;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class MySqlInsertTest_43 extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class MySqlInsertTest_43 {
+    @Test
     public void test_insert_0() throws Exception {
         String sql = "/*+engine=MPP, mppNativeInsertFromSelect=true*/\n" +
                 "insert into adl_indication_ums_warehouse_ebax_a (sys_pk,sys_ds,sys_biztime,sys_gmt_modified,business_type,parcelled_order_num,warehouse_id)\n" +
@@ -92,20 +93,20 @@ public class MySqlInsertTest_43 extends TestCase {
                 "\tFROM sales_order t1\n" +
                 "\t\tJOIN (\n" +
                 "\t\t\tSELECT t2_1.warehouse_id, t2_1.external_batch_code\n" +
-                "\t\t\t\t, CASE \n" +
+                "\t\t\t\t, (CASE\n" +
                 "\t\t\t\t\tWHEN t2_2.operation_type = 2\n" +
                 "\t\t\t\t\t\tOR t2_2.operation_type IS NULL\n" +
                 "\t\t\t\t\tTHEN '2'\n" +
                 "\t\t\t\t\tWHEN t2_2.operation_type = 3 THEN '800'\n" +
                 "\t\t\t\t\tWHEN t2_2.operation_type = 1 THEN '900'\n" +
-                "\t\t\t\tEND AS businessType\n" +
+                "\t\t\t\tEND) AS businessType\n" +
                 "\t\t\tFROM batch_order t2_1\n" +
                 "\t\t\t\tJOIN wave_order t2_2\n" +
                 "\t\t\t\tON t2_1.wave_id = t2_2.id\n" +
                 "\t\t\t\t\tAND t2_1.warehouse_id = t2_2.warehouse_id\n" +
                 "\t\t\t\t\tAND t2_2.wave_status IN (5, 6)\n" +
-                "\t\t\t\t\tAND t2_1.ds >= 201901 - 1\n" +
-                "\t\t\t\t\tAND t2_2.ds >= 201901 - 1\n" +
+                "\t\t\t\t\tAND t2_1.ds >= (201901 - 1)\n" +
+                "\t\t\t\t\tAND t2_2.ds >= (201901 - 1)\n" +
                 "\t\t\t\t\tAND t2_1.gmt_create >= date_add(now(), INTERVAL -3 DAY)\n" +
                 "\t\t\t\t\tAND t2_1.gmt_create <= now()\n" +
                 "\t\t\t\t\tAND t2_2.gmt_create >= date_add(now(), INTERVAL -3 DAY)\n" +
@@ -120,7 +121,5 @@ public class MySqlInsertTest_43 extends TestCase {
                 "\t\t\tAND t2.businessType IS NOT NULL\n" +
                 "\tGROUP BY t1.warehouse_id, t2.businessType\n" +
                 ") a", insertStmt.toString());
-
     }
-
 }

@@ -15,24 +15,31 @@
  */
 package com.alibaba.druid.bvt.filter.wall.oracle;
 
-import junit.framework.TestCase;
-
-import org.junit.Assert;
-
 import com.alibaba.druid.wall.WallConfig;
 import com.alibaba.druid.wall.WallUtils;
+import org.junit.jupiter.api.Test;
 
-public class OracleWallTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class OracleWallTest {
+    @Test
     public void testWall() throws Exception {
         WallConfig config = new WallConfig();
         config.setSelectUnionCheck(true);
-        assertTrue(WallUtils.isValidateOracle("select f1, f2 from t where c=1 union select 1, 2", config));
+        config.setCommentAllow(false);
+        assertFalse(WallUtils.isValidateOracle("select f1, f2 from t where c=1 union select 1, 2", config));
         assertFalse(WallUtils.isValidateOracle("select f1, f2 from t where c=1 union select 1, 2 --", config));
+
+        config.setSelectUnionCheck(false);
+        config.setCommentAllow(true);
+        assertTrue(WallUtils.isValidateOracle("select f1, f2 from t where c=1 union select 1, 2", config));
+        assertTrue(WallUtils.isValidateOracle("select f1, f2 from t where c=1 union select 1, 2 --", config));
 
         assertFalse(WallUtils.isValidateOracle("SELECT * FROM T UNION select * from TAB"));
         assertFalse(WallUtils.isValidateOracle("SELECT * FROM T UNION select * from ALL_TABLES where (1=1 or (1+1)=2) and (4=8 or 1=1)"));
     }
 
+    @Test
     public void testWall_1() throws Exception {
         WallConfig config = new WallConfig();
 

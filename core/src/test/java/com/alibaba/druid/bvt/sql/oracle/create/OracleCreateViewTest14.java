@@ -25,6 +25,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateViewTest14 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -213,7 +215,7 @@ public class OracleCreateViewTest14 extends OracleTest {
                         "\t\tWHERE t.account = at.ouser_id\n" +
                         "\t) AS order_account\n" +
                         "FROM ticket_product_order pw_order_info, allot_track at\n" +
-                        "WHERE at.order_id LIKE ('%' || pw_order_info.id || '%')\n" +
+                        "WHERE at.order_id LIKE '%' || pw_order_info.id || '%'\n" +
                         "\tAND at.produce_id = 'PW'\n" +
                         "\tAND at.end_date = to_date('1900-01-01', 'yyyy-mm-dd') -- hn --766ߡh (\n" +
                         "\tAND pw_order_info.status = '4'\n" +
@@ -316,7 +318,7 @@ public class OracleCreateViewTest14 extends OracleTest {
                         "FROM resaccount res, businessres bus\n" +
                         "WHERE bus.reservation_id = res.reservation_id\n" +
                         "\tAND (bus.confirm_status = '3'\n" +
-                        "\t\tOR bus.confirm_status = '7')",//
+                        "\t\tOR bus.confirm_status = '7')",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();

@@ -15,15 +15,18 @@
  */
 package com.alibaba.druid.sql.parser;
 
-import com.alibaba.druid.DbType;
+import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLPartitionBy;
 import com.alibaba.druid.sql.ast.SQLPartitionOf;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.oracle.parser.OracleSelectParser;
+import com.alibaba.druid.sql.template.SQLSelectQueryTemplate;
 import com.alibaba.druid.util.FnvHash;
 
 import java.util.List;
+
+import static com.alibaba.druid.sql.parser.DialectFeature.ParserFeature.CreateTableBodySupplemental;
+import static com.alibaba.druid.sql.parser.SQLParserFeature.Template;
 
 public class SQLCreateTableParser extends SQLDDLParser {
     public SQLCreateTableParser(String sql) {
@@ -41,95 +44,61 @@ public class SQLCreateTableParser extends SQLDDLParser {
             comments = lexer.readAndResetComments();
         }
 
-        SQLCreateTableStatement stmt = parseCreateTable(true);
+        SQLCreateTableStatement createTable = newCreateStatement();
         if (comments != null) {
-            stmt.addBeforeComment(comments);
+            createTable.addBeforeComment(comments);
         }
 
-        return stmt;
+        createTable.setDbType(dbType);
+
+        if (lexer.hasComment() && lexer.isKeepComments()) {
+            createTable.addBeforeComment(lexer.readAndResetComments());
+        }
+
+        accept(Token.CREATE);
+        createTableBefore(createTable);
+        if (lexer.token == Token.TABLE || lexer.identifierEquals(FnvHash.Constants.TABLE)) {
+            lexer.nextToken();
+        } else {
+            setErrorEndPos(lexer.pos());
+            printError(lexer.token);
+        }
+        createTableBeforeName(createTable);
+        createTable.setName(
+                this.exprParser.name());
+        createTableAfterName(createTable);
+        createTableBody(createTable);
+        parseCreateTableRest(createTable);
+        createTableQuery(createTable);
+        createTableAfterQuery(createTable);
+        return createTable;
     }
 
-    public SQLCreateTableStatement parseCreateTable(boolean acceptCreate) {
-        SQLCreateTableStatement createTable = newCreateStatement();
-        createTable.setDbType(getDbType());
+    protected SQLSelect createTableQueryRest() {
+        return this.createSQLSelectParser().select();
+    }
 
-        if (acceptCreate) {
-            if (lexer.hasComment() && lexer.isKeepComments()) {
-                createTable.addBeforeComment(lexer.readAndResetComments());
-            }
-
-            accept(Token.CREATE);
-        }
-
-        if (lexer.identifierEquals("GLOBAL")) {
-            lexer.nextToken();
-
-            if (lexer.identifierEquals("TEMPORARY")) {
+    protected void createTableQuery(SQLCreateTableStatement createTable) {
+        if (lexer.nextIf(Token.AS)) {
+            SQLSelect select;
+            if ((lexer.token == Token.IDENTIFIER || lexer.token == Token.VARIANT)
+                    && lexer.isEnabled(Template)
+                    && lexer.stringVal.startsWith("$")) {
+                select = new SQLSelect(
+                        new SQLSelectQueryTemplate(lexer.stringVal));
                 lexer.nextToken();
-                createTable.setType(SQLCreateTableStatement.Type.GLOBAL_TEMPORARY);
             } else {
-                throw new ParserException("syntax error " + lexer.info());
+                select = createTableQueryRest();
             }
-        } else if (lexer.token == Token.IDENTIFIER && lexer.stringVal().equalsIgnoreCase("LOCAL")) {
-            lexer.nextToken();
-            if (lexer.token == Token.IDENTIFIER && lexer.stringVal().equalsIgnoreCase("TEMPORAY")) {
-                lexer.nextToken();
-                createTable.setType(SQLCreateTableStatement.Type.LOCAL_TEMPORARY);
-            } else {
-                throw new ParserException("syntax error. " + lexer.info());
-            }
+            createTable.setSelect(select);
         }
+    }
 
-        if (lexer.identifierEquals(FnvHash.Constants.DIMENSION)) {
-            lexer.nextToken();
-            createTable.setDimension(true);
-        }
-
-        accept(Token.TABLE);
-
-        if (lexer.token() == Token.IF || lexer.identifierEquals("IF")) {
-            lexer.nextToken();
-            accept(Token.NOT);
-            accept(Token.EXISTS);
-
-            createTable.setIfNotExiists(true);
-        }
-
-        createTable.setName(this.exprParser.name());
-
-        if (lexer.token == Token.LPAREN) {
-            lexer.nextToken();
-
+    protected void createTableBody(SQLCreateTableStatement createTable) {
+        if (lexer.nextIf(Token.LPAREN)) {
             for (; ; ) {
-                Token token = lexer.token;
-                if (lexer.identifierEquals(FnvHash.Constants.SUPPLEMENTAL)
-                        && DbType.oracle == dbType) {
-                    SQLTableElement element = this.parseCreateTableSupplementalLogingProps();
-                    element.setParent(createTable);
-                    createTable.getTableElementList().add(element);
-                } else if (token == Token.IDENTIFIER //
-                        || token == Token.LITERAL_ALIAS) {
-                    SQLColumnDefinition column = this.exprParser.parseColumn(createTable);
-                    column.setParent(createTable);
-                    createTable.getTableElementList().add(column);
-                } else if (token == Token.PRIMARY //
-                        || token == Token.UNIQUE //
-                        || token == Token.CHECK //
-                        || token == Token.CONSTRAINT
-                        || token == Token.FOREIGN) {
-                    SQLConstraint constraint = this.exprParser.parseConstaint();
-                    constraint.setParent(createTable);
-                    createTable.getTableElementList().add((SQLTableElement) constraint);
-                } else if (token == Token.TABLESPACE) {
-                    throw new ParserException("TODO " + lexer.info());
-                } else {
-                    SQLColumnDefinition column = this.exprParser.parseColumn();
-                    createTable.getTableElementList().add(column);
-                }
-
-                if (lexer.token == Token.COMMA) {
-                    lexer.nextToken();
-
+                createTableBodyItem(createTable);
+                if (lexer.nextIf(Token.COMMA)) {
                     if (lexer.token == Token.RPAREN) { // compatible for sql server
                         break;
                     }
@@ -141,75 +110,132 @@ public class SQLCreateTableParser extends SQLDDLParser {
 
             accept(Token.RPAREN);
 
-            if (lexer.identifierEquals(FnvHash.Constants.INHERITS)) {
+            createTableAfter(createTable);
+        }
+    }
+
+    protected void createTableBodyItem(SQLCreateTableStatement createTable) {
+        Token token = lexer.token;
+        if (lexer.identifierEquals(FnvHash.Constants.SUPPLEMENTAL)
+                && dialectFeatureEnabled(CreateTableBodySupplemental)) {
+            SQLTableElement element = this.parseCreateTableSupplementalLoggingProps();
+            element.setParent(createTable);
+            createTable.getTableElementList().add(element);
+        } else if (token == Token.IDENTIFIER //
+                || token == Token.LITERAL_ALIAS) {
+            SQLColumnDefinition column = this.exprParser.parseColumn(createTable);
+            column.setParent(createTable);
+            createTable.getTableElementList().add(column);
+        } else if (token == Token.PRIMARY //
+                || token == Token.UNIQUE //
+                || token == Token.CHECK //
+                || token == Token.CONSTRAINT
+                || token == Token.FOREIGN) {
+            SQLConstraint constraint = this.exprParser.parseConstraint();
+            constraint.setParent(createTable);
+            createTable.getTableElementList().add((SQLTableElement) constraint);
+        } else if (token == Token.TABLESPACE) {
+            throw new ParserException("TABLESPACE as table element is not supported, use it after table definition. " + lexer.info());
+        } else if (lexer.token() == Token.LIKE) {
+            lexer.nextToken();
+            SQLTableLike tableLike = new SQLTableLike();
+            tableLike.setTable(new SQLExprTableSource(this.exprParser.name()));
+            tableLike.setParent(createTable);
+            createTable.getTableElementList().add(tableLike);
+
+            if (lexer.identifierEquals(FnvHash.Constants.INCLUDING)) {
                 lexer.nextToken();
-                accept(Token.LPAREN);
-                SQLName inherits = this.exprParser.name();
-                createTable.setInherits(new SQLExprTableSource(inherits));
-                accept(Token.RPAREN);
+                if (lexer.nextIfIdentifier(FnvHash.Constants.PROPERTIES)) {
+                    tableLike.setIncludeProperties(true);
+                } else if (lexer.nextIfIdentifier("DISTRIBUTION")) {
+                    tableLike.setIncludeDistribution(true);
+                }
+            } else if (lexer.identifierEquals(FnvHash.Constants.EXCLUDING)) {
+                lexer.nextToken();
+                if (lexer.nextIfIdentifier(FnvHash.Constants.PROPERTIES)) {
+                    tableLike.setExcludeProperties(true);
+                } else if (lexer.nextIfIdentifier("DISTRIBUTION")) {
+                    tableLike.setExcludeDistribution(true);
+                }
             }
+        } else if (lexer.token() == Token.INDEX) {
+            parseIndex(createTable);
+        } else {
+            SQLColumnDefinition column = this.exprParser.parseColumn();
+            createTable.getTableElementList().add(column);
         }
+    }
 
-        if (lexer.token == Token.AS) {
-            lexer.nextToken();
+    protected void parseIndex(SQLCreateTableStatement createTable) {
+        SQLColumnDefinition column = this.exprParser.parseColumn();
+        createTable.getTableElementList().add(column);
+    }
 
-            SQLSelect select = null;
-            if (DbType.oracle == dbType) {
-                select = new OracleSelectParser(this.exprParser).select();
+    protected void createTableBefore(SQLCreateTableStatement createTable) {
+        if (lexer.nextIfIdentifier("GLOBAL")) {
+            createTable.config(SQLCreateTableStatement.Feature.Global);
+            if (lexer.nextIfIdentifier("TEMPORARY") || lexer.nextIfIdentifier("TEMP")) {
+                createTable.config(SQLCreateTableStatement.Feature.Temporary);
             } else {
-                select = this.createSQLSelectParser().select();
+                throw new ParserException("syntax error " + lexer.info());
             }
-            createTable.setSelect(select);
+        } else if (lexer.nextIfIdentifier("LOCAL") || lexer.nextIf(Token.LOCAL)) {
+            createTable.config(SQLCreateTableStatement.Feature.Local);
+            if (lexer.nextIfIdentifier("TEMPORARY") || lexer.nextIfIdentifier("TEMP")) {
+                createTable.config(SQLCreateTableStatement.Feature.Temporary);
+            } else {
+                throw new ParserException("syntax error. " + lexer.info());
+            }
         }
 
-        if (lexer.token == Token.WITH && DbType.postgresql == dbType) {
-            lexer.nextToken();
+        if (lexer.nextIfIdentifier(FnvHash.Constants.DIMENSION)) {
+            createTable.config(SQLCreateTableStatement.Feature.Dimension);
+        }
+    }
+
+    protected void createTableBeforeName(SQLCreateTableStatement createTable) {
+        if (lexer.nextIf(Token.IF) || lexer.nextIfIdentifier("IF")) {
+            accept(Token.NOT);
+            accept(Token.EXISTS);
+
+            createTable.setIfNotExists(true);
+        }
+    }
+
+    protected void createTableAfterName(SQLCreateTableStatement createTable) {}
+
+    protected void createTableAfter(SQLCreateTableStatement stmt) {
+        if (lexer.nextIfIdentifier(FnvHash.Constants.INHERITS)) {
             accept(Token.LPAREN);
-            parseAssignItems(createTable.getTableOptions(), createTable, false);
+            SQLName inherits = this.exprParser.name();
+            stmt.setInherits(new SQLExprTableSource(inherits));
             accept(Token.RPAREN);
         }
-
-        if (lexer.token == Token.TABLESPACE) {
-            lexer.nextToken();
-            createTable.setTablespace(
-                    this.exprParser.name()
-            );
-        }
-
-        if (lexer.token() == Token.PARTITION) {
-            Lexer.SavePoint mark = lexer.mark();
-            lexer.nextToken();
-            if (Token.OF.equals(lexer.token())) {
-                lexer.reset(mark);
-                SQLPartitionOf partitionOf = parsePartitionOf();
-                createTable.setPartitionOf(partitionOf);
-            } else if (Token.BY.equals(lexer.token())) {
-                lexer.reset(mark);
-                SQLPartitionBy partitionClause = parsePartitionBy();
-                createTable.setPartitioning(partitionClause);
-            }
-        }
-
-        if (lexer.token() == Token.PARTITION) {
-            Lexer.SavePoint mark = lexer.mark();
-            lexer.nextToken();
-            if (Token.OF.equals(lexer.token())) {
-                lexer.reset(mark);
-                SQLPartitionOf partitionOf = parsePartitionOf();
-                createTable.setPartitionOf(partitionOf);
-            } else if (Token.BY.equals(lexer.token())) {
-                lexer.reset(mark);
-                SQLPartitionBy partitionClause = parsePartitionBy();
-                createTable.setPartitioning(partitionClause);
-            }
-        }
-
-        parseCreateTableRest(createTable);
-
-        return createTable;
     }
 
     protected void parseCreateTableRest(SQLCreateTableStatement stmt) {
+        // For partition of for PG
+        if (lexer.token() == Token.PARTITION) {
+            Lexer.SavePoint mark = lexer.mark();
+            lexer.nextToken();
+            // For partition of for PG
+            if (Token.OF.equals(lexer.token())) {
+                lexer.reset(mark);
+                SQLPartitionOf partitionOf = parsePartitionOf();
+                stmt.setPartitionOf(partitionOf);
+                // For partition by
+            } else if (Token.BY.equals(lexer.token())) {
+                lexer.reset(mark);
+                SQLPartitionBy partitionClause = parsePartitionBy();
+                stmt.setPartitionBy(partitionClause);
+            }
+        }
+
+        if (lexer.nextIf(Token.TABLESPACE)) {
+            stmt.setTablespace(
+                    this.exprParser.name()
+            );
+        }
     }
 
     public SQLPartitionBy parsePartitionBy() {
@@ -220,11 +246,99 @@ public class SQLCreateTableParser extends SQLDDLParser {
         return null;
     }
 
-    protected SQLTableElement parseCreateTableSupplementalLogingProps() {
-        throw new ParserException("TODO " + lexer.info());
+    protected SQLTableElement parseCreateTableSupplementalLoggingProps() {
+        throw new ParserException("SUPPLEMENTAL LOGGING is not supported for current dialect. " + lexer.info());
     }
 
     protected SQLCreateTableStatement newCreateStatement() {
         return new SQLCreateTableStatement(getDbType());
+    }
+
+    protected void parseOptions(SQLCreateTableStatement stmt) {
+        lexer.nextToken();
+        accept(Token.LPAREN);
+
+        for (; ; ) {
+            String name = lexer.stringVal();
+            lexer.nextToken();
+            accept(Token.EQ);
+            SQLExpr value = this.exprParser.primary();
+            stmt.addOption(name, value);
+            if (lexer.token() == Token.COMMA) {
+                lexer.nextToken();
+                if (lexer.token() == Token.RPAREN) {
+                    break;
+                }
+                continue;
+            }
+            break;
+        }
+
+        accept(Token.RPAREN);
+    }
+
+    protected void createTableAfterQuery(SQLCreateTableStatement stmt) {
+    }
+
+    /**
+     * Parse table COMMENT clause, common across multiple dialects (Hive, ClickHouse, GaussDB, StarRocks, BigQuery).
+     * Usage: call this in dialect-specific parseCreateTableRest() when COMMENT token is encountered.
+     *
+     * @return true if COMMENT was parsed, false otherwise
+     */
+    protected boolean parseTableComment(SQLCreateTableStatement stmt) {
+        if (lexer.nextIf(Token.COMMENT)) {
+            if (lexer.nextIf(Token.EQ)) {
+                // COMMENT = 'xxx'
+            }
+            stmt.setComment(this.exprParser.primary());
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Parse ENGINE = expr clause, common across MySQL, Hive, ClickHouse, StarRocks and other dialects.
+     *
+     * @return true if ENGINE was parsed, false otherwise
+     */
+    protected boolean parseTableEngine(SQLCreateTableStatement stmt) {
+        if (lexer.identifierEquals(FnvHash.Constants.ENGINE)) {
+            lexer.nextToken();
+            if (lexer.nextIf(Token.EQ)) {
+                // ENGINE = xxx
+            }
+            stmt.setEngine(this.exprParser.primary());
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Parse table-level assignment properties like WITH (key=value, ...) or TBLPROPERTIES (key=value, ...).
+     * Common across PostgreSQL, GaussDB, Hive, and other dialects.
+     *
+     * @param stmt the create table statement
+     * @param keyword the keyword to match (e.g., "TBLPROPERTIES")
+     * @return true if properties were parsed, false otherwise
+     */
+    protected boolean parseTableProperties(SQLCreateTableStatement stmt, String keyword) {
+        if (lexer.identifierEquals(keyword)) {
+            lexer.nextToken();
+            accept(Token.LPAREN);
+            for (; ; ) {
+                SQLAssignItem item = this.exprParser.parseAssignItem(true, stmt);
+                item.setParent(stmt);
+                stmt.getTableOptions().add(item);
+                if (lexer.token() == Token.COMMA) {
+                    lexer.nextToken();
+                    continue;
+                }
+                break;
+            }
+            accept(Token.RPAREN);
+            return true;
+        }
+        return false;
     }
 }

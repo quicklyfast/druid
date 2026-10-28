@@ -45,7 +45,9 @@ public enum SQLBinaryOperator {
     QuesAmp("?&", 20),
 
     LeftShift("<<", 80),
+    LeftShiftUnsigned("<<<", 80),
     RightShift(">>", 80),
+    RightShiftUnsigned(">>>", 80),
 
     BitwiseAnd("&", 90),
     BitwiseOr("|", 100),
@@ -89,6 +91,8 @@ public enum SQLBinaryOperator {
     RegExp("REGEXP", 110),
     NotRegExp("NOT REGEXP", 110),
     Equality("=", 110),
+    EqEq("==", 110),
+    MemberOf("MEMBER OF", 110), // mysql json: value MEMBER OF (json_array)
 
     BitwiseNot("!", 130),
     Concat("||", 140),
@@ -97,6 +101,7 @@ public enum SQLBinaryOperator {
     BooleanXor("XOR", 150),
     BooleanOr("OR", 160),
     Assignment(":=", 169),
+    Blank("", 170),
 
     PG_And("&&", 140),
     PG_ST_DISTANCE("<->", 20);
@@ -166,5 +171,19 @@ public enum SQLBinaryOperator {
             default:
                 return false;
         }
+    }
+
+    public static SQLBinaryOperator from(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        for (SQLBinaryOperator value : values()) {
+            if (value.name.equals(str)) {
+                return value;
+            }
+        }
+
+        return valueOf(str);
     }
 }

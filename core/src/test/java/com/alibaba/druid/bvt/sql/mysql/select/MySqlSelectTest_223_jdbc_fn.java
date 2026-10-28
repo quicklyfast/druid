@@ -21,6 +21,7 @@ import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MySqlSelectTest_223_jdbc_fn extends MysqlTest {
     public void test_0() throws Exception {
@@ -39,11 +40,11 @@ public class MySqlSelectTest_223_jdbc_fn extends MysqlTest {
 
         SQLStatement stmt = statementList.get(0);
 
-        assertEquals("SELECT CAST(TRUNCATE(EXTRACT(YEAR FROM `calcs`.`date0` + (-DAYOFWEEK(`calcs`.`date0`) + 1) * INTERVAL '1' DAY), 0) AS INTEGER) AS `TEMP(Test)(1308221269)(0)`\n" +
+        assertEquals("SELECT CAST(TRUNCATE(EXTRACT(YEAR FROM (`calcs`.`date0` + ((-DAYOFWEEK(`calcs`.`date0`)) + 1) * INTERVAL '1' DAY)), 0) AS INTEGER) AS `TEMP(Test)(1308221269)(0)`\n" +
                 "FROM `calcs`\n" +
                 "GROUP BY 1", stmt.toString());
 
-        assertEquals("select cast(TRUNCATE(extract(YEAR from `calcs`.`date0` + (-DAYOFWEEK(`calcs`.`date0`) + 1) * interval '1' day), 0) as INTEGER) as `TEMP(Test)(1308221269)(0)`\n" +
+        assertEquals("select cast(TRUNCATE(extract(YEAR from (`calcs`.`date0` + ((-DAYOFWEEK(`calcs`.`date0`)) + 1) * interval '1' day)), 0) as INTEGER) as `TEMP(Test)(1308221269)(0)`\n" +
                 "from `calcs`\n" +
                 "group by 1", stmt.clone().toLowerCaseString());
     }

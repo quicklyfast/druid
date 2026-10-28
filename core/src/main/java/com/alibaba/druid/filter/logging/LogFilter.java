@@ -79,7 +79,11 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
     protected DataSourceProxy dataSource;
 
     public LogFilter() {
-        configFromProperties(System.getProperties());
+        this(System.getProperties());
+    }
+
+    public LogFilter(final Properties properties) {
+        configFromProperties(properties);
     }
 
     public void configFromProperties(Properties properties) {
@@ -145,11 +149,13 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
         }
     }
 
+    private DbType dbType;
     @Override
     public void init(DataSourceProxy dataSource) {
         this.dataSource = dataSource;
+        dbType = DbType.of(dataSource.getDbType());
         configFromProperties(dataSource.getConnectProperties());
-        configFromProperties(System.getProperties());
+        //configFromProperties(System.getProperties());
     }
 
     public boolean isConnectionLogErrorEnabled() {
@@ -397,7 +403,7 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
                     .append(connection.getId());
 
             Connection impl = connection.getRawObject();
-            if (DbType.mysql == DbType.of(dataSource.getDbType())) {
+            if (DbType.mysql.equals(dbType)) {
                 Long procId = MySqlUtils.getId(impl);
                 if (procId != null) {
                     msg.append(",procId-").append(procId);
@@ -414,7 +420,7 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
         Savepoint savepoint = chain.connection_setSavepoint(connection);
 
         if (isConnectionLogEnabled()) {
-            connectionLog("{conn " + connection.getId() + "} setSavepoint-" + savepointToString(savepoint));
+            connectionLog("{conn-" + connection.getId() + "} setSavepoint-" + savepointToString(savepoint));
         }
 
         return savepoint;
@@ -426,7 +432,7 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
         Savepoint savepoint = chain.connection_setSavepoint(connection, name);
 
         if (isConnectionLogEnabled()) {
-            connectionLog("{conn " + connection.getId() + "} setSavepoint-" + name);
+            connectionLog("{conn-" + connection.getId() + "} setSavepoint-" + name);
         }
 
         return savepoint;
@@ -463,7 +469,9 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
     @Override
     public void connection_setAutoCommit(FilterChain chain, ConnectionProxy connection, boolean autoCommit)
             throws SQLException {
-        connectionLog("{conn-" + connection.getId() + "} setAutoCommit " + autoCommit);
+        if (isConnectionLogEnabled()) {
+            connectionLog("{conn-" + connection.getId() + "} setAutoCommit " + autoCommit);
+        }
         chain.connection_setAutoCommit(connection, autoCommit);
     }
 
@@ -607,16 +615,15 @@ public abstract class LogFilter extends FilterEventAdapter implements LogFilterM
     public void resultSet_close(FilterChain chain, ResultSetProxy resultSet) throws SQLException {
         chain.resultSet_close(resultSet);
 
-        StringBuilder buf = new StringBuilder();
-        buf.append("{conn-");
-        buf.append(resultSet.getStatementProxy().getConnectionProxy().getId());
-        buf.append(", ");
-        buf.append(stmtId(resultSet));
-        buf.append(", rs-");
-        buf.append(resultSet.getId());
-        buf.append("} closed");
-
         if (isResultSetCloseAfterLogEnabled()) {
+            StringBuilder buf = new StringBuilder();
+            buf.append("{conn-");
+            buf.append(resultSet.getStatementProxy().getConnectionProxy().getId());
+            buf.append(", ");
+            buf.append(stmtId(resultSet));
+            buf.append(", rs-");
+            buf.append(resultSet.getId());
+            buf.append("} closed");
             resultSetLog(buf.toString());
         }
     }

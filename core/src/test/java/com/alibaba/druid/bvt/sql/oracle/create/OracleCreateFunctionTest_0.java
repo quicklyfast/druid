@@ -25,6 +25,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateFunctionTest_0 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -57,8 +59,8 @@ public class OracleCreateFunctionTest_0 extends OracleTest {
                         "\tINTO acc_bal\n" +
                         "\tFROM orders\n" +
                         "\tWHERE customer_id = acc_no;\n" +
-                        "\tRETURN acc_bal;\n" +
-                        "END;",//
+                        "\tRETURN (acc_bal);\n" +
+                        "END;",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();

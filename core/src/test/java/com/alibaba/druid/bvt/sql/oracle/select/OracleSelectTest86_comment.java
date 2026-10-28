@@ -22,14 +22,20 @@ import com.alibaba.druid.sql.dialect.oracle.parser.OracleLexer;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.SQLParserFeature;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleSelectTest86_comment extends OracleTest {
     public void test_0() throws Exception {
         String sql = //
-                "/*sqlId=9f0szhacj63ag*/SELECT /*+rule*/ SYS_XMLGEN(VALUE(KU$), XMLFORMAT.createFormat2('TABLE_T', '7')), KU$.OBJ_NUM FROM SYS.KU$_HTABLE_VIEW KU$ WHERE NOT (BITAND (KU$.PROPERTY,8192)=8192) AND  NOT BITAND(KU$.SCHEMA_OBJ.FLAGS,128)!=0 AND  KU$.SCHEMA_OBJ.NAME=:NAME1 AND  KU$.SCHEMA_OBJ.OWNER_NAME=:SCHEMA2"; //
+                "/*sqlId=9f0szhacj63ag*/SELECT /*+rule*/ SYS_XMLGEN(VALUE(KU$), XMLFORMAT.createFormat2('TABLE_T', '7')), "
+                    + "KU$.OBJ_NUM FROM SYS.KU$_HTABLE_VIEW KU$ WHERE"
+                    + " NOT (BITAND (KU$.PROPERTY,8192)=8192) AND "
+                    + " NOT BITAND(KU$.SCHEMA_OBJ.FLAGS,128)!=0 "
+                    + "AND  KU$.SCHEMA_OBJ.NAME=:NAME1 "
+                    + "AND  KU$.SCHEMA_OBJ.OWNER_NAME=:SCHEMA2";
 
         System.out.println(sql);
 
@@ -44,7 +50,7 @@ public class OracleSelectTest86_comment extends OracleTest {
         SQLStatement stmt = statementList.get(0);
         print(statementList);
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
         stmt.accept(visitor);
@@ -56,8 +62,8 @@ public class OracleSelectTest86_comment extends OracleTest {
                     "SELECT /*+rule*/ SYS_XMLGEN(VALUE(KU$), XMLFORMAT.createFormat2('TABLE_T', '7'))\n" +
                     "\t, KU$.OBJ_NUM\n" +
                     "FROM SYS.KU$_HTABLE_VIEW KU$\n" +
-                    "WHERE (NOT BITAND(KU$.PROPERTY, 8192) = 8192)\n" +
-                    "\tAND (NOT BITAND(KU$.SCHEMA_OBJ.FLAGS, 128) != 0)\n" +
+                    "WHERE NOT (BITAND(KU$.PROPERTY, 8192) = 8192)\n" +
+                    "\tAND NOT BITAND(KU$.SCHEMA_OBJ.FLAGS, 128) != 0\n" +
                     "\tAND KU$.SCHEMA_OBJ.NAME = :NAME1\n" +
                     "\tAND KU$.SCHEMA_OBJ.OWNER_NAME = :SCHEMA2", text);
         }
@@ -74,12 +80,12 @@ public class OracleSelectTest86_comment extends OracleTest {
         assertEquals(0, visitor.getRelationships().size());
         assertEquals(0, visitor.getOrderByColumns().size());
 
-//        Assert.assertTrue(visitor.containsTable("sup_registration"));
-//        Assert.assertTrue(visitor.containsTable("sup_task"));
-//        Assert.assertTrue(visitor.containsTable("sys_org"));
+//        assertTrue(visitor.containsTable("sup_registration"));
+//        assertTrue(visitor.containsTable("sup_task"));
+//        assertTrue(visitor.containsTable("sys_org"));
 //
-//         Assert.assertTrue(visitor.containsColumn("sup_task", "orgid"));
-//         Assert.assertTrue(visitor.containsColumn("sup_task", "orgid"));
+//         assertTrue(visitor.containsColumn("sup_task", "orgid"));
+//         assertTrue(visitor.containsColumn("sup_task", "orgid"));
 //
     }
 }

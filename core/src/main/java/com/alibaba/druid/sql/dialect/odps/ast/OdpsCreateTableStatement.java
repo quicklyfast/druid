@@ -18,7 +18,7 @@ package com.alibaba.druid.sql.dialect.odps.ast;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
-import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
+import com.alibaba.druid.sql.ast.expr.SQLAliasedExpr;
 import com.alibaba.druid.sql.ast.statement.SQLExprTableSource;
 import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.odps.visitor.OdpsASTVisitor;
@@ -28,9 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OdpsCreateTableStatement extends HiveCreateTableStatement {
+    protected SQLAliasedExpr autoPartitionedBy;
     protected final List<SQLExpr> withSerdeproperties = new ArrayList<SQLExpr>();
-    protected SQLExpr lifecycle;
-    protected SQLExpr storedBy;
 
     public OdpsCreateTableStatement() {
         super(DbType.odps);
@@ -48,23 +47,19 @@ public class OdpsCreateTableStatement extends HiveCreateTableStatement {
         this.like = like;
     }
 
-    public List<SQLColumnDefinition> getPartitionColumns() {
-        return partitionColumns;
+    public SQLAliasedExpr getAutoPartitionedBy() {
+        return autoPartitionedBy;
     }
 
-    public void addPartitionColumn(SQLColumnDefinition column) {
-        if (column != null) {
-            column.setParent(this);
+    public void setAutoPartitionedBy(SQLAliasedExpr x) {
+        if (x != null) {
+            x.setParent(this);
         }
-        this.partitionColumns.add(column);
+        this.autoPartitionedBy = x;
     }
 
-    public SQLExpr getLifecycle() {
-        return lifecycle;
-    }
-
-    public void setLifecycle(SQLExpr lifecycle) {
-        this.lifecycle = lifecycle;
+    public void setAutoPartitionedBy(SQLExpr x, String alias) {
+        setAutoPartitionedBy(new SQLAliasedExpr(x, alias));
     }
 
     @Override
@@ -88,19 +83,7 @@ public class OdpsCreateTableStatement extends HiveCreateTableStatement {
         super.acceptChild(v);
 
         acceptChild(v, withSerdeproperties);
-        acceptChild(v, lifecycle);
         acceptChild(v, storedBy);
-    }
-
-    public SQLExpr getStoredBy() {
-        return storedBy;
-    }
-
-    public void setStoredBy(SQLExpr x) {
-        if (x != null) {
-            x.setParent(this);
-        }
-        this.storedBy = x;
     }
 
     public List<SQLExpr> getWithSerdeproperties() {

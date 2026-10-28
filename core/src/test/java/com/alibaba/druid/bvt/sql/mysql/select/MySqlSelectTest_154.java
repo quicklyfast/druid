@@ -11,6 +11,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_154 extends MysqlTest {
     public void test_0() throws Exception {
         String sql = "SELECT 1 is NULL,(~(NULLIF(1,1 ))) \n" +
@@ -25,18 +27,15 @@ public class MySqlSelectTest_154 extends MysqlTest {
 
         assertEquals(1, statementList.size());
 
-        assertEquals("SELECT 1 IS NULL, ~NULLIF(1, 1)\n" +
+        assertEquals("SELECT 1 IS NULL, (~(NULLIF(1, 1)))\n" +
                 "FROM corona_select_one_db_one_tb layer_0_left_tb\n" +
                 "\tRIGHT JOIN corona_select_multi_db_one_tb layer_0_right_tb ON layer_0_right_tb.tinyint_1bit_test = layer_0_right_tb.decimal_test\n" +
-                "WHERE (1 + '1' IS NULL) != 30 - layer_0_right_tb.time_test NOT IN (layer_0_left_tb.decimal_test, layer_0_right_tb.tinyint_test, layer_0_left_tb.integer_test, RPAD(NULL, 0, layer_0_left_tb.year_test))", stmt.toString());
+                "WHERE 1 + '1' IS NULL != 30 - layer_0_right_tb.time_test NOT IN (layer_0_left_tb.decimal_test, layer_0_right_tb.tinyint_test, layer_0_left_tb.integer_test, RPAD(NULL, 0, layer_0_left_tb.year_test))", stmt.toString());
 
-        assertEquals("SELECT ? IS NULL, ~NULLIF(?, ?)\n" +
+        assertEquals("SELECT ? IS NULL, (~(NULLIF(?, ?)))\n" +
                         "FROM corona_select_one_db_one_tb layer_0_left_tb\n" +
                         "\tRIGHT JOIN corona_select_multi_db_one_tb layer_0_right_tb ON layer_0_right_tb.tinyint_1bit_test = layer_0_right_tb.decimal_test\n" +
-                        "WHERE (? + ? IS NULL) != ? - layer_0_right_tb.time_test NOT IN (layer_0_left_tb.decimal_test, layer_0_right_tb.tinyint_test, layer_0_left_tb.integer_test, RPAD(NULL, ?, layer_0_left_tb.year_test))"
-                , ParameterizedOutputVisitorUtils.parameterize(sql, JdbcConstants.MYSQL, VisitorFeature.OutputParameterizedZeroReplaceNotUseOriginalSql));
-
-
+                        "WHERE ? + ? IS NULL != ? - layer_0_right_tb.time_test NOT IN (layer_0_left_tb.decimal_test, layer_0_right_tb.tinyint_test, layer_0_left_tb.integer_test, RPAD(NULL, ?, layer_0_left_tb.year_test))",
+                ParameterizedOutputVisitorUtils.parameterize(sql, JdbcConstants.MYSQL, VisitorFeature.OutputParameterizedZeroReplaceNotUseOriginalSql));
     }
-
 }

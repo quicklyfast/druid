@@ -18,8 +18,6 @@ package com.alibaba.druid.sql.dialect.mysql.parser;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.hive.parser.HiveCreateTableParser;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlOutFileExpr;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSelectQueryBlock;
@@ -69,19 +67,11 @@ public class MySqlSelectParser extends SQLSelectParser {
 
         lexer.nextTokenIdent();
 
+        if (lexer.hasComment()) {
+            queryBlock.setCommentsAfterFrom(lexer.readAndResetComments());
+        }
         while (lexer.token() == Token.HINT) {
             lexer.nextToken();
-        }
-
-        if (lexer.token() == Token.TABLE) {
-            HiveCreateTableParser createTableParser = new HiveCreateTableParser(lexer);
-            HiveCreateTableStatement stmt = (HiveCreateTableStatement) createTableParser
-                    .parseCreateTable(false);
-            SQLAdhocTableSource tableSource = new SQLAdhocTableSource(stmt);
-            queryBlock.setFrom(
-                    parseTableSourceRest(tableSource)
-            );
-            return;
         }
 
         if (lexer.token() == Token.UPDATE) { // taobao returning to urgly syntax
@@ -386,7 +376,7 @@ public class MySqlSelectParser extends SQLSelectParser {
                     select.getQuery().setParenthesized(true);
                     tableSource = new SQLUnionQueryTableSource((SQLUnionQuery) query);
                 } else {
-                    tableSource = new SQLSubqueryTableSource(select);
+                    tableSource = SQLSubqueryTableSource.fixParenthesized(new SQLSubqueryTableSource(select));
                 }
 
                 if (hints != null) {
@@ -404,7 +394,7 @@ public class MySqlSelectParser extends SQLSelectParser {
                         select.getQuery().setParenthesized(true);
                         tableSource = new SQLUnionQueryTableSource((SQLUnionQuery) query);
                     } else {
-                        tableSource = new SQLSubqueryTableSource(select);
+                        tableSource = SQLSubqueryTableSource.fixParenthesized(new SQLSubqueryTableSource(select));
                     }
 
                     if (hints != null) {
@@ -419,7 +409,7 @@ public class MySqlSelectParser extends SQLSelectParser {
                         unionQuery.setParenthesized(true);
                         tableSource = new SQLUnionQueryTableSource((SQLUnionQuery) query);
                     } else {
-                        tableSource = new SQLSubqueryTableSource(unionQuery);
+                        tableSource = SQLSubqueryTableSource.fixParenthesized(new SQLSubqueryTableSource(unionQuery));
                     }
 
                     if (hints != null) {
@@ -474,36 +464,10 @@ public class MySqlSelectParser extends SQLSelectParser {
             throw new ParserException("TODO. " + lexer.info());
         }
 
-        if (lexer.identifierEquals(FnvHash.Constants.UNNEST)) {
-            Lexer.SavePoint mark = lexer.mark();
-            lexer.nextToken();
-
-            if (lexer.token() == Token.LPAREN) {
-                lexer.nextToken();
-                SQLUnnestTableSource unnest = new SQLUnnestTableSource();
-                this.exprParser.exprList(unnest.getItems(), unnest);
-                accept(Token.RPAREN);
-
-                if (lexer.token() == Token.WITH) {
-                    lexer.nextToken();
-                    acceptIdentifier("ORDINALITY");
-                    unnest.setOrdinality(true);
-                }
-
-                String alias = this.tableAlias();
-                unnest.setAlias(alias);
-
-                if (lexer.token() == Token.LPAREN) {
-                    lexer.nextToken();
-                    this.exprParser.names(unnest.getColumns(), unnest);
-                    accept(Token.RPAREN);
-                }
-
-                SQLTableSource tableSrc = parseTableSourceRest(unnest);
-                return tableSrc;
-            } else {
-                lexer.reset(mark);
-            }
+        SQLTableSource unnestTableSource = parseUnnestTableSource();
+        if (unnestTableSource != null) {
+            SQLTableSource tableSrc = parseTableSourceRest(unnestTableSource);
+            return tableSrc;
         }
 
         SQLExprTableSource tableReference = new SQLExprTableSource();
@@ -818,6 +782,26 @@ public class MySqlSelectParser extends SQLSelectParser {
         }
 
         return super.parseTableSourceRest(tableSource);
+    }
+
+    @Override
+    protected SQLTableSource parseLateralView(SQLTableSource tableSource) {
+        if (tableSource != null && "LATERAL".equalsIgnoreCase(tableSource.getAlias())) {
+            tableSource.setAlias(null);
+        }
+
+        if (lexer.token() == Token.VIEW) {
+            return super.parseLateralView(tableSource);
+        }
+
+        // MySQL 8.0.14+ LATERAL derived table: LATERAL (SELECT ...)
+        SQLTableSource lateralSource = parseLateralTableSource();
+
+        SQLJoinTableSource join = new SQLJoinTableSource();
+        join.setLeft(tableSource);
+        join.setRight(lateralSource);
+        join.setJoinType(SQLJoinTableSource.JoinType.COMMA);
+        return parseTableSourceRest(join);
     }
 
     private void parseIndexHintList(SQLTableSource tableSource) {

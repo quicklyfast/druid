@@ -15,12 +15,11 @@
  */
 package com.alibaba.druid.bvt.filter.wall.mysql;
 
-import junit.framework.TestCase;
-
-import org.junit.Assert;
-
 import com.alibaba.druid.wall.WallProvider;
 import com.alibaba.druid.wall.spi.MySqlWallProvider;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * SQLServerWallTest
@@ -29,14 +28,19 @@ import com.alibaba.druid.wall.spi.MySqlWallProvider;
  * @version 1.0, 2012-3-18
  * @see
  */
-public class MySqlWallTest94 extends TestCase {
+public class MySqlWallTest94 {
+    @Test
     public void test_false() throws Exception {
         WallProvider provider = new MySqlWallProvider();
 
-        Assert.assertTrue(provider.checkValid(//
+        assertFalse(provider.checkValid(//
                 "select * from test having 1=1"));
 
-        Assert.assertEquals(1, provider.getTableStats().size());
-    }
+        assertEquals(1, provider.getTableStats().size());
 
+        provider.reset();
+        provider.getConfig().setSelectHavingAlwayTrueCheck(false);
+        assertTrue(provider.checkValid(//
+                "select * from test having 1=1"));
+    }
 }

@@ -15,21 +15,35 @@
  */
 package com.alibaba.druid.sql.dialect.oracle.parser;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.parser.*;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.alibaba.druid.sql.parser.CharTypes.isIdentifierChar;
+import static com.alibaba.druid.sql.parser.DialectFeature.LexerFeature.*;
+import static com.alibaba.druid.sql.parser.DialectFeature.ParserFeature.*;
 import static com.alibaba.druid.sql.parser.LayoutCharacters.EOI;
 
 public class OracleLexer extends Lexer {
-    public static final Keywords DEFAULT_ORACLE_KEYWORDS;
-
+    static final Keywords ORACLE_KEYWORDS;
+    static final DialectFeature ORACLE_FEATURE = new DialectFeature(
+            Arrays.asList(
+                    ScanSQLTypeWithBegin,
+                    SQLDateExpr,
+                    PrimaryVariantColon,
+                    CreateTableBodySupplemental,
+                    AsCommaFrom
+            ),
+            Collections.singletonList(
+                    SQLTimestampExpr
+            )
+    );
     static {
-        Map<String, Token> map = new HashMap<String, Token>();
-
-        map.putAll(Keywords.DEFAULT_KEYWORDS.getKeywords());
+        Map<String, Token> map = new HashMap<>(Keywords.DEFAULT_KEYWORDS.getKeywords());
 
         map.put("BEGIN", Token.BEGIN);
         map.put("COMMENT", Token.COMMENT);
@@ -55,7 +69,7 @@ public class OracleLexer extends Lexer {
         map.put("MERGE", Token.MERGE);
 
         map.put("MODE", Token.MODE);
-//        map.put("MODEL", Token.MODEL);
+        //        map.put("MODEL", Token.MODEL);
         map.put("NOWAIT", Token.NOWAIT);
         map.put("OF", Token.OF);
         map.put("PRIOR", Token.PRIOR);
@@ -63,6 +77,7 @@ public class OracleLexer extends Lexer {
         map.put("REJECT", Token.REJECT);
         map.put("RETURN", Token.RETURN);
         map.put("RETURNING", Token.RETURNING);
+        map.put("REVERSE", Token.REVERSE);
         map.put("SAVEPOINT", Token.SAVEPOINT);
         map.put("SESSION", Token.SESSION);
 
@@ -110,31 +125,37 @@ public class OracleLexer extends Lexer {
         map.put("TRUE", Token.TRUE);
         map.put("FALSE", Token.FALSE);
         map.put("CASCADE", Token.CASCADE);
+        map.put("MATCHED", Token.MATCHED);
 
         map.put("，", Token.COMMA);
         map.put("（", Token.LPAREN);
         map.put("）", Token.RPAREN);
 
-        DEFAULT_ORACLE_KEYWORDS = new Keywords(map);
+        ORACLE_KEYWORDS = new Keywords(map);
+    }
+
+    @Override
+    protected Keywords loadKeywords() {
+        return ORACLE_KEYWORDS;
     }
 
     public OracleLexer(char[] input, int inputLength, boolean skipComment) {
         super(input, inputLength, skipComment);
-        super.keywords = DEFAULT_ORACLE_KEYWORDS;
+        dbType = DbType.oracle;
     }
 
     public OracleLexer(String input) {
         super(input);
         this.skipComment = true;
         this.keepComments = true;
-        super.keywords = DEFAULT_ORACLE_KEYWORDS;
+        dbType = DbType.oracle;
     }
 
     public OracleLexer(String input, SQLParserFeature... features) {
         super(input);
         this.skipComment = true;
         this.keepComments = true;
-        super.keywords = DEFAULT_ORACLE_KEYWORDS;
+        dbType = DbType.oracle;
 
         for (SQLParserFeature feature : features) {
             config(feature, true);
@@ -180,7 +201,6 @@ public class OracleLexer extends Lexer {
                 }
 
                 bufPos++;
-                continue;
             }
         } else {
             for (; ; ) {
@@ -191,7 +211,6 @@ public class OracleLexer extends Lexer {
                 }
 
                 bufPos++;
-                continue;
             }
         }
 
@@ -229,7 +248,6 @@ public class OracleLexer extends Lexer {
         } else {
             token = Token.MONKEYS_AT;
         }
-        return;
     }
 
     public void scanComment() {
@@ -259,7 +277,7 @@ public class OracleLexer extends Lexer {
                 bufPos++;
             }
 
-            for (; !isEOF(); ) {
+            while (!isEOF()) {
                 if (ch == '*' && charAt(pos + 1) == '/') {
                     bufPos += 2;
                     scanChar();
@@ -328,7 +346,6 @@ public class OracleLexer extends Lexer {
                 addComment(stringVal);
             }
             endOfComment = isEOF();
-            return;
         }
     }
 
@@ -340,12 +357,8 @@ public class OracleLexer extends Lexer {
             ch = charAt(++pos);
         }
 
-        for (; ; ) {
-            if (ch >= '0' && ch <= '9') {
-                bufPos++;
-            } else {
-                break;
-            }
+        while (ch >= '0' && ch <= '9') {
+            bufPos++;
             ch = charAt(++pos);
         }
 
@@ -360,12 +373,8 @@ public class OracleLexer extends Lexer {
             ch = charAt(++pos);
             isDouble = true;
 
-            for (; ; ) {
-                if (ch >= '0' && ch <= '9') {
-                    bufPos++;
-                } else {
-                    break;
-                }
+            while (ch >= '0' && ch <= '9') {
+                bufPos++;
                 ch = charAt(++pos);
             }
         }
@@ -379,12 +388,8 @@ public class OracleLexer extends Lexer {
                 ch = charAt(++pos);
             }
 
-            for (; ; ) {
-                if (ch >= '0' && ch <= '9') {
-                    bufPos++;
-                } else {
-                    break;
-                }
+            while (ch >= '0' && ch <= '9') {
+                bufPos++;
                 ch = charAt(++pos);
             }
 
@@ -410,4 +415,8 @@ public class OracleLexer extends Lexer {
         }
     }
 
+    @Override
+    protected void initDialectFeature() {
+        this.dialectFeature = ORACLE_FEATURE;
+    }
 }

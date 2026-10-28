@@ -20,6 +20,8 @@ import com.alibaba.druid.sql.MysqlTest;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_308_mtr
         extends MysqlTest {
     public void test_0() throws Exception {
@@ -31,6 +33,6 @@ public class MySqlSelectTest_308_mtr
         assertEquals("SELECT *\n" +
                 "FROM t1\n" +
                 "\tJOIN t2\n" +
-                "\tSTRAIGHT_JOIN t3 ON t1.a = t3.c;", stmt.toString());
+                "\tSTRAIGHT_JOIN t3 ON (t1.a = t3.c);", stmt.toString());
     }
 }

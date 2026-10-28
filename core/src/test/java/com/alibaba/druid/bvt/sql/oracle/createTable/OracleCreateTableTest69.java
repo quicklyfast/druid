@@ -22,6 +22,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateTableTest69 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -49,12 +51,12 @@ public class OracleCreateTableTest69 extends OracleTest {
                         ")\n" +
                         "PARTITION BY HASH (COL) (\n" +
                         "\tPARTITION PART01\n" +
-                        "\t\tTABLESPACE HASH_TS01, \n" +
+                        "\t\tTABLESPACE HASH_TS01,\n" +
                         "\tPARTITION PART02\n" +
-                        "\t\tTABLESPACE HASH_TS02, \n" +
+                        "\t\tTABLESPACE HASH_TS02,\n" +
                         "\tPARTITION PART03\n" +
                         "\t\tTABLESPACE HASH_TS03\n" +
-                        ")",//
+                        ")",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 //
 //        SchemaStatVisitor visitor = SQLUtils.createSchemaStatVisitor(JdbcConstants.ORACLE);

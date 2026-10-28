@@ -15,17 +15,18 @@
  */
 package com.alibaba.druid.bvt.sql.oracle.select;
 
-import com.alibaba.druid.sql.MysqlTest;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.util.JdbcConstants;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 
-public class OracleSelectTest124 extends TestCase {
+public class OracleSelectTest124 {
+    @Test
     public void test_0() throws Exception {
         String sql = "SELECT\n" +
                 "J01.COL_A,\n" +
@@ -45,5 +46,46 @@ public class OracleSelectTest124 extends TestCase {
         assertEquals("SELECT J01.COL_A, J01.COL_B, \"SUM\"(J01.COL_C) OVER (PARTITION BY J01.COL_A ORDER BY J01.COL_B NULLS FIRST ROWS  BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS COL_C\n" +
                 "FROM TAB_A J01", stmt.toString());
     }
+    @Test
+    public void test_1() throws Exception {
+        String sql = "SELECT\n" +
+                "J01.COL_A,\n" +
+                "J01.COL_B,\n" +
+                "\"SUM\"(J01.COL_C) OVER (\n" +
+                "PARTITION BY J01.COL_A ORDER BY J01.COL_B NULLS FIRST ROWS BETWEEN 5 PRECEDING AND 8 FOLLOWING\n" +
+                ") AS COL_C\n" +
+                "FROM\n" +
+                "TAB_A J01";
 
+        List<SQLStatement> statementList = SQLUtils.parseStatements(sql, JdbcConstants.ORACLE);
+
+        assertEquals(1, statementList.size());
+
+        SQLSelectStatement stmt = (SQLSelectStatement) statementList.get(0);
+        System.out.println(stmt.toString());
+
+        assertEquals("SELECT J01.COL_A, J01.COL_B, \"SUM\"(J01.COL_C) OVER (PARTITION BY J01.COL_A ORDER BY J01.COL_B NULLS FIRST ROWS  BETWEEN 5 PRECEDING AND 8 FOLLOWING) AS COL_C\n" +
+                "FROM TAB_A J01", stmt.toString());
+    }
+
+    @Test
+    public void test_2() throws Exception {
+        String sql = "SELECT\n" +
+                "J01.COL_A,\n" +
+                "J01.COL_B,\n" +
+                "\"SUM\"(J01.COL_C) OVER (\n" +
+                "PARTITION BY J01.COL_A ORDER BY J01.COL_B NULLS FIRST ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n" +
+                ") AS COL_C\n" +
+                "FROM\n" +
+                "TAB_A J01";
+
+        List<SQLStatement> statementList = SQLUtils.parseStatements(sql, JdbcConstants.ORACLE);
+
+        assertEquals(1, statementList.size());
+
+        SQLSelectStatement stmt = (SQLSelectStatement) statementList.get(0);
+        System.out.println(stmt.toString());
+        assertEquals("SELECT J01.COL_A, J01.COL_B, \"SUM\"(J01.COL_C) OVER (PARTITION BY J01.COL_A ORDER BY J01.COL_B NULLS FIRST ROWS  BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS COL_C\n" +
+                "FROM TAB_A J01", stmt.toString());
+    }
 }

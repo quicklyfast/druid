@@ -8,6 +8,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_126_ads_minus extends MysqlTest {
     public void test_0() throws Exception {
         String sql = "select q.case_id as case_id\n" +
@@ -34,7 +36,7 @@ public class MySqlSelectTest_126_ads_minus extends MysqlTest {
                 "FROM (\n" +
                 "\tSELECT p.id AS case_id, p.gmt_create AS create_time, p.member_id AS member_id, b.biz_2_name AS biz_2_name, b.biz_3_name AS biz_3_name\n" +
                 "\t\t, b.biz_4_name AS biz_4_name, d.deal_nick AS deal_nick, d.ad_account AS ad_account, d.org_name AS dept_name\n" +
-                "\t\t, CASE \n" +
+                "\t\t, CASE\n" +
                 "\t\t\tWHEN d.org_level = 7 THEN org_6_name\n" +
                 "\t\t\tWHEN d.org_level = 6 THEN org_5_name\n" +
                 "\t\t\tWHEN d.org_level = 5 THEN org_4_name\n" +
@@ -68,6 +70,4 @@ public class MySqlSelectTest_126_ads_minus extends MysqlTest {
                 "\tWHERE action_code = 999997)\n" +
                 ")", stmt.toString());
     }
-
-
 }

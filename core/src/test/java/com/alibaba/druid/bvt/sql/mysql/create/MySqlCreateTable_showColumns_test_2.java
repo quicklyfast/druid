@@ -20,6 +20,8 @@ import com.alibaba.druid.sql.repository.SchemaObject;
 import com.alibaba.druid.sql.repository.SchemaRepository;
 import com.alibaba.druid.util.JdbcConstants;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlCreateTable_showColumns_test_2 extends MysqlTest {
     public void test_0() throws Exception {
         SchemaRepository repository = new SchemaRepository(JdbcConstants.MYSQL);
@@ -34,6 +36,6 @@ public class MySqlCreateTable_showColumns_test_2 extends MysqlTest {
         assertEquals("CREATE TABLE card_record (\n" +
                 "\tid bigint AUTO_INCREMENT,\n" +
                 "\tcustomization_id bigint UNSIGNED NOT NULL COMMENT 'TEST'\n" +
-                ") AUTO_INCREMENT = 256", table.getStatement().toString());
+                ") AUTO_INCREMENT = 256;", table.getStatement().toString());
     }
 }

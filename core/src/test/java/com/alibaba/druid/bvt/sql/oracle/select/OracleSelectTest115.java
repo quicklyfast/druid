@@ -25,6 +25,8 @@ import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleSelectTest115 extends OracleTest {
     public void test_0() throws Exception {
         String sql = "select * from ( select row_.*, rownum rownum_ from ( select HYKY as HYKY,WHCD as WHCD,ZASD as ZASD,TX as TX,XZFS as XZFS,SSGAJGMC as SSGAJGMC,XZDX as XZDX,HJDDZQH as HJDDZQH,XX as XX,MZ as MZ,TSTX as TSTX,SJJZDDZQH as SJJZDDZQH,HDDQ as HDDQ,ZY as ZY,XZCS as XZCS,BMCH as BMCH,CSD as CSD,ZAGJ as ZAGJ,XB as XB,XZWP as XZWP,CSRQ as CSRQ,SSGAJGJGDM as SSGAJGJGDM,AJLB as AJLB,TBTSBJ as TBTSBJ,LX as LX,XP as XP, '' as  from QQFW_ZYK.GZDX where (XM='忘轻春') ) row_ where rownum <= 5)";
@@ -53,7 +55,7 @@ public class OracleSelectTest115 extends OracleTest {
                     "\t\t\t, CSRQ AS CSRQ, SSGAJGJGDM AS SSGAJGJGDM, AJLB AS AJLB, TBTSBJ AS TBTSBJ, LX AS LX\n" +
                     "\t\t\t, XP AS XP, NULL\n" +
                     "\t\tFROM QQFW_ZYK.GZDX\n" +
-                    "\t\tWHERE XM = '忘轻春'\n" +
+                    "\t\tWHERE (XM = '忘轻春')\n" +
                     "\t) row_\n" +
                     "\tWHERE rownum <= 5\n" +
                     ")", text);
@@ -70,7 +72,5 @@ public class OracleSelectTest115 extends OracleTest {
         assertEquals(2, visitor.getConditions().size());
         assertEquals(0, visitor.getRelationships().size());
         assertEquals(0, visitor.getOrderByColumns().size());
-
     }
-
 }

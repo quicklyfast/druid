@@ -7,11 +7,13 @@ import com.alibaba.druid.sql.parser.SQLParserUtils;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
 import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 import com.alibaba.druid.stat.TableStat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PrestoSelect_0 {
     protected final DbType dbType = DbType.presto;
@@ -38,7 +40,7 @@ public class PrestoSelect_0 {
                 "\t\tWHERE n < 4\n" +
                 "\t)\n" +
                 "SELECT sum(n)\n" +
-                "FROM t", stmt.toString());
+                "FROM t;", stmt.toString());
     }
 
     @Test
@@ -54,7 +56,7 @@ public class PrestoSelect_0 {
         assertFalse(tableMap.isEmpty());
         assertEquals("SELECT student, score\n" +
                 "FROM tests\n" +
-                "\tCROSS JOIN UNNEST(scores) AS t (score)", stmt.toString());
+                "\tCROSS JOIN UNNEST(scores) AS t (score);", stmt.toString());
     }
 
     @Test
@@ -74,7 +76,7 @@ public class PrestoSelect_0 {
         assertTrue(tableMap.isEmpty());
         assertEquals("SELECT numbers, animals, n, a\n" +
                 "FROM (VALUES (ARRAY[2, 5], ARRAY['dog', 'cat', 'bird']), (ARRAY[7, 8, 9], ARRAY['cow', 'pig'])) AS x (numbers, animals)\n" +
-                "\tCROSS JOIN UNNEST(numbers, animals) AS t (n, a)", stmt.toString());
+                "\tCROSS JOIN UNNEST(numbers, animals) AS t (n, a);", stmt.toString());
     }
 
     @Test
@@ -94,7 +96,7 @@ public class PrestoSelect_0 {
         assertTrue(tableMap.isEmpty());
         assertEquals("SELECT numbers, n, a\n" +
                 "FROM (VALUES (ARRAY[2, 5]), (ARRAY[7, 8, 9])) AS x (numbers)\n" +
-                "\tCROSS JOIN UNNEST(numbers) WITH ORDINALITY AS t (n, a)", stmt.toString());
+                "\tCROSS JOIN UNNEST(numbers) WITH ORDINALITY AS t (n, a);", stmt.toString());
     }
 
     @Test
@@ -116,7 +118,7 @@ public class PrestoSelect_0 {
                 "\t)\n" +
                 "\tCROSS JOIN LATERAL(\n" +
                 "\t\tSELECT x || ')' AS y\n" +
-                "\t)", stmt.toString());
+                "\t);", stmt.toString());
     }
 
     @Test
@@ -140,7 +142,7 @@ public class PrestoSelect_0 {
                 "\tSELECT *\n" +
                 "\tFROM region\n" +
                 "\tWHERE region.regionkey = nation.regionkey\n" +
-                ")", stmt.toString());
+                ");", stmt.toString());
     }
 
     @Test
@@ -165,7 +167,7 @@ public class PrestoSelect_0 {
                 "\tFROM region\n" +
                 "\tWHERE name = 'AMERICA'\n" +
                 "\t\tOR name = 'AFRICA'\n" +
-                ")", stmt.toString());
+                ");", stmt.toString());
     }
 
     @Test
@@ -184,7 +186,6 @@ public class PrestoSelect_0 {
                 "WHERE regionkey = (\n" +
                 "\tSELECT max(regionkey)\n" +
                 "\tFROM region\n" +
-                ")", stmt.toString());
+                ");", stmt.toString());
     }
-
 }

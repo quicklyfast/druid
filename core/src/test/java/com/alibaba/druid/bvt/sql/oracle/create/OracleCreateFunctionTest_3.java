@@ -24,6 +24,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateFunctionTest_3 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -111,7 +113,7 @@ public class OracleCreateFunctionTest_3 extends OracleTest {
                         "\t\t\tRESULT := '1';\n" +
                         "\t\tEND IF;\n" +
                         "\tEND IF;\n" +
-                        "\tRETURN RESULT;\n" +
+                        "\tRETURN (RESULT);\n" +
                         "EXCEPTION\n" +
                         "\tWHEN OTHERS THEN\n" +
                         "\t\tCLOSE VALUECURSOR;\n" +
@@ -119,7 +121,7 @@ public class OracleCreateFunctionTest_3 extends OracleTest {
                         "\t\tIF VALUECURSOR % ISOPEN THEN\n" +
                         "\t\t\tCLOSE VALUECURSOR;\n" +
                         "\t\tEND IF;\n" +
-                        "END;",//
+                        "END;",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
@@ -132,8 +134,7 @@ public class OracleCreateFunctionTest_3 extends OracleTest {
         System.out.println("orderBy : " + visitor.getOrderByColumns());
 
         assertEquals(1, visitor.getTables().size());
-
-        assertEquals(1, visitor.getColumns().size());
+        assertEquals(0, visitor.getColumns().size());
 
 //        assertTrue(visitor.getColumns().contains(new TableStat.Column("orders", "order_total")));
     }

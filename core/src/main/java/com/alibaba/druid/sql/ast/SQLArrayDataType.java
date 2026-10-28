@@ -14,7 +14,10 @@ public class SQLArrayDataType extends SQLObjectImpl implements SQLDataType {
 
     private DbType dbType;
     private SQLDataType componentType;
+    private boolean usedForCast;
     private List<SQLExpr> arguments = new ArrayList<SQLExpr>();
+    public SQLArrayDataType() {
+    }
 
     public SQLArrayDataType(SQLDataType componentType) {
         setComponentType(componentType);
@@ -55,6 +58,14 @@ public class SQLArrayDataType extends SQLObjectImpl implements SQLDataType {
         throw new UnsupportedOperationException();
     }
 
+    public boolean isUsedForCast() {
+        return usedForCast;
+    }
+
+    public void setUsedForCast(boolean usedForCast) {
+        this.usedForCast = usedForCast;
+    }
+
     @Override
     public boolean isWithLocalTimeZone() {
         return false;
@@ -84,7 +95,10 @@ public class SQLArrayDataType extends SQLObjectImpl implements SQLDataType {
     }
 
     public SQLArrayDataType clone() {
-        SQLArrayDataType x = new SQLArrayDataType(componentType.clone());
+        SQLArrayDataType x = new SQLArrayDataType();
+        if (componentType != null) {
+            x.setComponentType(componentType.clone());
+        }
         x.dbType = dbType;
 
         for (SQLExpr arg : arguments) {

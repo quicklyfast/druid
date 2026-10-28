@@ -19,6 +19,7 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.SQLCommentHint;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
+import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.SQLStatementImpl;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOperator;
@@ -34,6 +35,10 @@ public class SQLSetStatement extends SQLStatementImpl {
     private List<SQLAssignItem> items = new ArrayList<SQLAssignItem>();
 
     private List<SQLCommentHint> hints;
+
+    private boolean useSet;
+
+    SQLStatement maridbSetForStatement;
 
     public SQLSetStatement() {
     }
@@ -82,10 +87,26 @@ public class SQLSetStatement extends SQLStatementImpl {
         this.option = option;
     }
 
+    public boolean isUseSet() {
+        return useSet;
+    }
+
+    public void setUseSet(boolean useSet) {
+        this.useSet = useSet;
+    }
+
     public void set(SQLExpr target, SQLExpr value) {
         SQLAssignItem assignItem = new SQLAssignItem(target, value);
         assignItem.setParent(this);
         this.items.add(assignItem);
+    }
+
+    public SQLStatement getMaridbSetForStatement() {
+        return maridbSetForStatement;
+    }
+
+    public void setMaridbSetForStatement(SQLStatement maridbSetForStatement) {
+        this.maridbSetForStatement = maridbSetForStatement;
     }
 
     @Override
@@ -93,6 +114,9 @@ public class SQLSetStatement extends SQLStatementImpl {
         if (visitor.visit(this)) {
             acceptChild(visitor, this.items);
             acceptChild(visitor, this.hints);
+            if (maridbSetForStatement != null) {
+                maridbSetForStatement.accept(visitor);
+            }
         }
         visitor.endVisit(this);
     }

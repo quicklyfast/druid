@@ -21,6 +21,8 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.parser.SQLParserFeature;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class HiveCreateTableTest_49_dla
         extends OracleTest {
     public void test_0() throws Exception {
@@ -42,11 +44,10 @@ public class HiveCreateTableTest_49_dla
                 ")\n" +
                 "LIKE\n" +
                 "SELECT pure_date\n" +
-                "\t, substr(regexp_extract(fld11, '\"sgm_add\":\"?([^\"}]*)', 1), 1, 10) AS sgm_add\n" +
+                "\t, (substr(regexp_extract(fld11, '\"sgm_add\":\"?([^\"}]*)', 1), 1, 10)) AS sgm_add\n" +
                 "FROM log_push_1912\n" +
                 "WHERE pure_date = 20191120", clone.toString());
 
         assertEquals(stmt.toString(), SQLUtils.parseSingleStatement(stmt.toString(), DbType.hive, SQLParserFeature.KeepComments).toString());
     }
-
 }

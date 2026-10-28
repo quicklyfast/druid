@@ -25,9 +25,10 @@ import com.alibaba.druid.sql.ast.statement.SQLSubqueryTableSource;
 import com.alibaba.druid.sql.ast.statement.SQLUpdateSetItem;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleMergeTest11 extends OracleTest {
     public void test_0() throws Exception {
@@ -51,7 +52,7 @@ public class OracleMergeTest11 extends OracleTest {
         List<SQLStatement> stmtList = parser.parseStatementList();
         SQLMergeStatement mergeStatement = (SQLMergeStatement) stmtList.get(0);
         String result = SQLUtils.toOracleString(mergeStatement);
-        Assert.assertEquals("MERGE INTO (\n" +
+        assertEquals("MERGE INTO (\n" +
                         "\tSELECT *\n" +
                         "\tFROM KPI_M_CW_INCOME_FACT_BAK\n" +
                         "\tWHERE THE_DATE = '{THISMONTH}'\n" +
@@ -64,8 +65,10 @@ public class OracleMergeTest11 extends OracleTest {
                         "\tWHERE THE_DATE = TRUNC(SYSDATE)\n" +
                         "\t\tAND AREA_LEVEL <= 1\n" +
                         ") B ON (A.AREA_ID = B.AREA_ID\n" +
-                        "AND A.AREA_LEVEL = B.AREA_LEVEL) \n" +
-                        "WHEN MATCHED THEN UPDATE SET A.SUM_CHRG_YS = ROUND(B.TOTAL_CHARGE * 1.00 / 10000, 2), A.CHARGE = B.THIS_CHARGE;",
+                        "AND A.AREA_LEVEL = B.AREA_LEVEL)\n" +
+                        "WHEN MATCHED THEN UPDATE\n" +
+                        "SET A.SUM_CHRG_YS = ROUND(B.TOTAL_CHARGE * 1.00 / 10000, 2),\n" +
+                        "\tA.CHARGE = B.THIS_CHARGE;",
                 result);
 
         SQLSelect select = ((SQLSubqueryTableSource) mergeStatement.getInto()).getSelect();
@@ -75,16 +78,15 @@ public class OracleMergeTest11 extends OracleTest {
                 "\tAND AREA_LEVEL <= 1\n" +
                 "\tAND TYPE_ID = '2'", select.toString());
 
-        SQLUpdateSetItem updateSetItem = mergeStatement.getUpdateClause().getItems().get(0);
+        SQLUpdateSetItem updateSetItem = ((SQLMergeStatement.WhenUpdate) mergeStatement.getWhens().get(0)).getItems().get(0);
         SQLExpr value = updateSetItem.getValue();
 
         assertEquals("ROUND(B.TOTAL_CHARGE * 1.00 / 10000, 2)", value.toString());
 
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "employee_id")));
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "department_id")));
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("bonuses", "employee_id")));
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("bonuses", "bonus")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "employee_id")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "department_id")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("bonuses", "employee_id")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("bonuses", "bonus")));
     }
-
 }

@@ -20,9 +20,10 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleSelectTest77 extends OracleTest {
     public void test_0() throws Exception {
@@ -64,14 +65,14 @@ public class OracleSelectTest77 extends OracleTest {
                         "        )\n" +
                         "    )\n" +
                         "WHERE\n" +
-                        "    a.enabled_flag = 'Y'"; //
+                        "    a.enabled_flag = 'Y'";
 
         OracleStatementParser parser = new OracleStatementParser(sql);
         List<SQLStatement> statementList = parser.parseStatementList();
         SQLStatement stmt = statementList.get(0);
         print(statementList);
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
         stmt.accept(visitor);
@@ -95,7 +96,7 @@ public class OracleSelectTest77 extends OracleTest {
                     "\t, d.id AS customer_id, d.name AS customer_name, a.salesrep_id\n" +
                     "FROM tcc_cpr.tcc_cpr_contract_headers a\n" +
                     "LEFT JOIN tcc_cpr.virtual_value2004 b ON a.contract_header_id = b.contract_header_id\n" +
-                    "\tAND b.template_id = CASE \n" +
+                    "\tAND b.template_id = CASE\n" +
                     "\t\tWHEN a.contract_category = 'SALES' THEN 1\n" +
                     "\t\tWHEN a.contract_category = 'INTERNATIONAL' THEN 49\n" +
                     "\tEND\n" +
@@ -103,13 +104,13 @@ public class OracleSelectTest77 extends OracleTest {
                     "LEFT JOIN tcc_cpr.tcc_cpr_payment c ON a.contract_header_id = c.contract_header_id\n" +
                     "\tAND c.payment_condition_code = 'ZTE_PAYMENT_YUFU'\n" +
                     "\tAND c.enabled_flag = 'Y' \n" +
-                    "\tLEFT JOIN tcc_cust.tcc_cust_customer d ON a.customer_id = d.id\n" +
+                    "\tLEFT JOIN tcc_cust.tcc_cust_customer d ON (a.customer_id = d.id\n" +
                     "\tAND (d.enable_flag = 'Y'\n" +
-                    "\t\tOR d.enable_flag = 'T') \n" +
+                    "\t\tOR d.enable_flag = 'T')) \n" +
                     "WHERE a.enabled_flag = 'Y'", text);
         }
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("acduser.vw_acd_info", "xzqh")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("acduser.vw_acd_info", "xzqh")));
 
-        // Assert.assertTrue(visitor.getOrderByColumns().contains(new TableStat.Column("employees", "last_name")));
+        // assertTrue(visitor.getOrderByColumns().contains(new TableStat.Column("employees", "last_name")));
     }
 }

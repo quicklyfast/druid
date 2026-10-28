@@ -24,6 +24,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleBlockTest18 extends OracleTest {
     public void test_0() throws Exception {
         String sql = "CREATE PROCEDURE p (\n" +
@@ -45,7 +47,7 @@ public class OracleBlockTest18 extends OracleTest {
                 "    UPDATE employees\n" +
                 "    SET salary = salary + bonus \n" +
                 "    WHERE employee_id = emp_id;\n" +
-                "  END p;"; //
+                "  END p;";
 
         List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, JdbcConstants.ORACLE);
         assertEquals(1, stmtList.size());
@@ -60,7 +62,7 @@ public class OracleBlockTest18 extends OracleTest {
                 "AS\n" +
                 "\tbonus NUMBER := 0;\n" +
                 "BEGIN\n" +
-                "\tIF sales > quota + 200 THEN\n" +
+                "\tIF sales > (quota + 200) THEN\n" +
                 "\t\tbonus := (sales - quota) / 4;\n" +
                 "\tELSE\n" +
                 "\t\tbonus := 50;\n" +
@@ -92,6 +94,6 @@ public class OracleBlockTest18 extends OracleTest {
         assertEquals(1, visitor.getConditions().size());
         assertEquals(0, visitor.getRelationships().size());
 
-        // Assert.assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
+        // assertTrue(visitor.getColumns().contains(new TableStat.Column("employees", "salary")));
     }
 }

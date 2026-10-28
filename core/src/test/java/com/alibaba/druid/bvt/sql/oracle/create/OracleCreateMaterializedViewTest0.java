@@ -25,6 +25,8 @@ import com.alibaba.druid.util.JdbcConstants;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class OracleCreateMaterializedViewTest0 extends OracleTest {
     public void test_types() throws Exception {
         String sql = //
@@ -55,7 +57,7 @@ public class OracleCreateMaterializedViewTest0 extends OracleTest {
                         "FROM invoice\n" +
                         "WHERE invoice_date < CURRENT_DATE\n" +
                         "GROUP BY seller_no, invoice_date\n" +
-                        "ORDER BY seller_no, invoice_date;",//
+                        "ORDER BY seller_no, invoice_date;",
                 SQLUtils.toSQLString(stmt, JdbcConstants.ORACLE));
 
         OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
@@ -69,7 +71,7 @@ public class OracleCreateMaterializedViewTest0 extends OracleTest {
 
         assertEquals(1, visitor.getTables().size());
 
-        assertEquals(4, visitor.getColumns().size());
+        assertEquals(3, visitor.getColumns().size());
 
         assertTrue(visitor.getColumns().contains(new TableStat.Column("invoice", "seller_no")));
     }

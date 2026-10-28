@@ -21,9 +21,10 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OracleSelectTest104 extends OracleTest {
     public void test_0() throws Exception {
@@ -52,7 +53,7 @@ public class OracleSelectTest104 extends OracleTest {
         SQLSelectStatement stmt = (SQLSelectStatement) statementList.get(0);
         System.out.println(stmt.toString());
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
 //        SQLMethodInvokeExpr expr = (SQLMethodInvokeExpr) stmt.getSelect().getQueryBlock().getSelectList().get(0).getExpr();
 //        SQLMethodInvokeExpr param0 = (SQLMethodInvokeExpr) expr.getParameters().get(0);
@@ -70,12 +71,12 @@ public class OracleSelectTest104 extends OracleTest {
                     "FROM (\n" +
                     "\tSELECT /*+ qb_name(\"innerQuery\")  */ 1 AS C1\n" +
                     "\tFROM SYS.\"X$KZSPR\" \"X$KZSPR\"\n" +
-                    "\tWHERE \"X$KZSPR\".\"INST_ID\" = USERENV('INSTANCE')\n" +
-                    "\t\tAND (-\"X$KZSPR\".\"KZSPRPRV\" = -45\n" +
-                    "\t\t\tOR -\"X$KZSPR\".\"KZSPRPRV\" = -47\n" +
-                    "\t\t\tOR -\"X$KZSPR\".\"KZSPRPRV\" = -48\n" +
-                    "\t\t\tOR -\"X$KZSPR\".\"KZSPRPRV\" = -49\n" +
-                    "\t\t\tOR -\"X$KZSPR\".\"KZSPRPRV\" = -50)\n" +
+                    "\tWHERE (\"X$KZSPR\".\"INST_ID\" = USERENV('INSTANCE'))\n" +
+                    "\t\tAND ((-\"X$KZSPR\".\"KZSPRPRV\") = -45\n" +
+                    "\t\t\tOR (-\"X$KZSPR\".\"KZSPRPRV\") = -47\n" +
+                    "\t\t\tOR (-\"X$KZSPR\".\"KZSPRPRV\") = -48\n" +
+                    "\t\t\tOR (-\"X$KZSPR\".\"KZSPRPRV\") = -49\n" +
+                    "\t\t\tOR (-\"X$KZSPR\".\"KZSPRPRV\") = -50)\n" +
                     ") innerQuery", text);
         }
 
@@ -91,6 +92,4 @@ public class OracleSelectTest104 extends OracleTest {
         assertEquals(0, visitor.getRelationships().size());
         assertEquals(0, visitor.getOrderByColumns().size());
     }
-
-
 }

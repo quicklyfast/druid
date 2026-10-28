@@ -19,10 +19,11 @@ import com.alibaba.druid.sql.MysqlTest;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.util.JdbcConstants;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MySqlCreateFullTextDictTest extends MysqlTest {
     @Test
@@ -36,9 +37,10 @@ public class MySqlCreateFullTextDictTest extends MysqlTest {
         SQLStatement stmt = stmtList.get(0);
 
         String output = SQLUtils.toMySqlString(stmt);
-        Assert.assertEquals("CREATE FULLTEXT DICTIONARY test1(\n"
+        assertEquals("CREATE FULLTEXT DICTIONARY test1(\n"
                 + "word varchar COMMENT 'comment1'\n"
-                + ") COMMENT 'comment1'", output);
+                + ")\n" +
+                "COMMENT 'comment1'", output);
     }
 
     @Test
@@ -50,7 +52,7 @@ public class MySqlCreateFullTextDictTest extends MysqlTest {
         SQLStatement stmt = stmtList.get(0);
 
         String output = SQLUtils.toMySqlString(stmt);
-        Assert.assertEquals("SHOW FULLTEXT DICTIONARIES", output);
+        assertEquals("SHOW FULLTEXT DICTIONARIES", output);
     }
 
     @Test
@@ -62,7 +64,7 @@ public class MySqlCreateFullTextDictTest extends MysqlTest {
         SQLStatement stmt = stmtList.get(0);
 
         String output = SQLUtils.toMySqlString(stmt);
-        Assert.assertEquals("SHOW FULLTEXT DICTIONARIES", output);
+        assertEquals("SHOW FULLTEXT DICTIONARIES", output);
     }
 
     @Test
@@ -74,6 +76,6 @@ public class MySqlCreateFullTextDictTest extends MysqlTest {
         SQLStatement stmt = stmtList.get(0);
 
         String output = SQLUtils.toMySqlString(stmt);
-        Assert.assertEquals("DROP FULLTEXT DICTIONARY dic_name", output);
+        assertEquals("DROP FULLTEXT DICTIONARY dic_name", output);
     }
 }

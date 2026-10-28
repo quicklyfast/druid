@@ -25,11 +25,13 @@ public abstract class SQLPartitionBy extends SQLObjectImpl {
     protected SQLSubPartitionBy subPartitionBy;
     protected SQLExpr partitionsCount;
     protected boolean linear;
-    protected List<SQLPartition> partitions = new ArrayList<SQLPartition>();
+    protected List<SQLPartition> partitions = new ArrayList<>();
     protected List<SQLName> storeIn = new ArrayList<SQLName>();
     protected List<SQLExpr> columns = new ArrayList<SQLExpr>();
+    protected Boolean auto;
+    protected Boolean logical;
 
-    protected SQLIntegerExpr lifecycle;
+    protected SQLIntegerExpr lifeCycle;
 
     public List<SQLPartition> getPartitions() {
         return partitions;
@@ -91,6 +93,22 @@ public abstract class SQLPartitionBy extends SQLObjectImpl {
         this.columns.add(column);
     }
 
+    public Boolean getAuto() {
+        return this.auto;
+    }
+
+    public void setAuto(Boolean auto) {
+        this.auto = auto;
+    }
+
+    public Boolean getLogical() {
+        return logical;
+    }
+
+    public void setLogical(Boolean logical) {
+        this.logical = logical;
+    }
+
     public void cloneTo(SQLPartitionBy x) {
         if (subPartitionBy != null) {
             x.setSubPartitionBy(subPartitionBy.clone());
@@ -110,7 +128,7 @@ public abstract class SQLPartitionBy extends SQLObjectImpl {
             x.storeIn.add(name2);
         }
 
-        x.lifecycle = lifecycle;
+        x.lifeCycle = lifeCycle;
     }
 
     public boolean isPartitionByColumn(long columnNameHashCode64) {
@@ -128,12 +146,12 @@ public abstract class SQLPartitionBy extends SQLObjectImpl {
         return false;
     }
 
-    public SQLIntegerExpr getLifecycle() {
-        return lifecycle;
+    public SQLIntegerExpr getLifeCycle() {
+        return lifeCycle;
     }
 
-    public void setLifecycle(SQLIntegerExpr lifecycle) {
-        this.lifecycle = lifecycle;
+    public void setLifeCycle(SQLIntegerExpr x) {
+        this.lifeCycle = x;
     }
 
     public abstract SQLPartitionBy clone();

@@ -6,7 +6,7 @@
 
 	<groupId>com.alibaba</groupId>
 	<artifactId>druid-parent</artifactId>
-	<version>1.2.21-SNAPSHOT</version>
+	<version>1.2.29-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
 	<description>A JDBC datasource implementation.</description>
 	<packaging>pom</packaging>
@@ -37,9 +37,11 @@
 		<springframework6.version>6.0.8</springframework6.version>
 		<springboot2.version>2.7.9</springboot2.version>
 		<springboot3.version>3.0.6</springboot3.version>
+		<springboot4.version>4.0.0-M3</springboot4.version>
 
 		<junit.version>4.13.1</junit.version>
-		<jmh.version>1.19</jmh.version>
+		<junit-jupiter.version>5.11.4</junit-jupiter.version>
+		<jmh.version>1.37</jmh.version>
 
 		<gpg.skip>false</gpg.skip>
 		<javadoc.skip>false</javadoc.skip>
@@ -80,19 +82,21 @@
 	</developers>
 
 	<distributionManagement>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
 		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<id>central</id>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	<dependencyManagement>
 		<dependencies>
-			<!-- spring libs -->
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit-jupiter.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -110,6 +114,13 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.openjdk.jmh</groupId>
+							<artifactId>jmh-generator-annprocess</artifactId>
+							<version>${jmh.version}</version>
+						</path>
+					</annotationProcessorPaths>
 					<parameters>true</parameters>
 				</configuration>
 				<executions>
@@ -143,12 +154,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.2</version>
+				<version>3.4.0</version>
 				<dependencies>
 					<dependency>
 						<groupId>com.puppycrawl.tools</groupId>
 						<artifactId>checkstyle</artifactId>
-						<version>9.2</version>
+						<version>9.3</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -161,13 +172,22 @@
 						<configuration>
 							<skip>false</skip>
 							<failOnViolation>true</failOnViolation>
-							<includeTestSourceDirectory>false</includeTestSourceDirectory>
+							<includeTestSourceDirectory>true</includeTestSourceDirectory>
 							<configLocation>src/checkstyle/druid-checks.xml</configLocation>
 							<excludes>
 							</excludes>
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.8.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+				</configuration>
 			</plugin>
 		</plugins>
 		<pluginManagement>
@@ -194,11 +214,11 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.4.1</version>
+					<version>3.8.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M7</version>
+					<version>3.5.2</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-assembly-plugin</artifactId>
@@ -463,8 +483,8 @@
 							</execution>
 						</executions>
 						<configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<serverId>central</serverId>
+							<nexusUrl>https://central.sonatype.org/</nexusUrl>
 							<autoReleaseAfterClose>true</autoReleaseAfterClose>
 							<!--
                             If you are deploying to Maven Central,
@@ -486,10 +506,8 @@
 				<jdk>[17,)</jdk>
 			</activation>
 			<modules>
-				<!--
-                <module>example-graalvm-native</module>
-                -->
 				<module>druid-spring-boot-3-starter</module>
+				<module>druid-spring-boot-4-starter</module>
 			</modules>
 		</profile>
 	</profiles>

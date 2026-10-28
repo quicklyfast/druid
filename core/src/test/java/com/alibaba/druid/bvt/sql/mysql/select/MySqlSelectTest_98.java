@@ -20,9 +20,10 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MySqlSelectTest_98 extends MysqlTest {
     public void test_0() throws Exception {
@@ -55,14 +56,13 @@ public class MySqlSelectTest_98 extends MysqlTest {
                 "               WHERE  adzone_id = 48868196) t3 \n" +
                 "            ON t3.__aid = t2.__aid \n";
 
-
         MySqlStatementParser parser = new MySqlStatementParser(sql);
         List<SQLStatement> statementList = parser.parseStatementList();
         SQLStatement stmt = statementList.get(0);
 //        print(statementList);
         System.out.println(stmt.toString());
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
         MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
         stmt.accept(visitor);
@@ -72,24 +72,24 @@ public class MySqlSelectTest_98 extends MysqlTest {
 //        System.out.println("coditions : " + visitor.getConditions());
 //        System.out.println("orderBy : " + visitor.getOrderByColumns());
 
-        Assert.assertEquals(3, visitor.getTables().size());
-        Assert.assertEquals(12, visitor.getColumns().size());
-        Assert.assertEquals(6, visitor.getConditions().size());
-        Assert.assertEquals(0, visitor.getOrderByColumns().size());
+        assertEquals(3, visitor.getTables().size());
+        assertEquals(12, visitor.getColumns().size());
+        assertEquals(6, visitor.getConditions().size());
+        assertEquals(0, visitor.getOrderByColumns().size());
 
         {
             String output = SQLUtils.toMySqlString(stmt);
-            Assert.assertEquals("INSERT INTO brand_crm_ship.imp_order_lock (tid, pid, __aid, pv)\n" +
+            assertEquals("INSERT INTO brand_crm_ship.imp_order_lock (tid, pid, __aid, pv)\n" +
                             "SELECT 121, 48868196, t2.__aid, t3.pv\n" +
                             "FROM (\n" +
                             "\tSELECT DISTINCT __aid\n" +
                             "\tFROM (\n" +
                             "\t\tSELECT DISTINCT brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.__aid AS __aid\n" +
                             "\t\tFROM brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump\n" +
-                            "\t\tWHERE brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_interest IN ('1142')\n" +
+                            "\t\tWHERE (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_interest IN ('1142')\n" +
                             "\t\t\tAND brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.user_age IN ('4', '3', '2', '1')\n" +
                             "\t\t\tAND brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_basic IN ('1605', '1603', '1604', '1563')\n" +
-                            "\t\t\tAND NOT (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_industry IN ('1140'))\n" +
+                            "\t\t\tAND NOT (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_industry IN ('1140')))\n" +
                             "\t) t1\n" +
                             ") t2\n" +
                             "\tJOIN (\n" +
@@ -102,17 +102,17 @@ public class MySqlSelectTest_98 extends MysqlTest {
         }
         {
             String output = SQLUtils.toMySqlString(stmt, SQLUtils.DEFAULT_LCASE_FORMAT_OPTION);
-            Assert.assertEquals("insert into brand_crm_ship.imp_order_lock (tid, pid, __aid, pv)\n" +
+            assertEquals("insert into brand_crm_ship.imp_order_lock (tid, pid, __aid, pv)\n" +
                             "select 121, 48868196, t2.__aid, t3.pv\n" +
                             "from (\n" +
                             "\tselect distinct __aid\n" +
                             "\tfrom (\n" +
                             "\t\tselect distinct brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.__aid as __aid\n" +
                             "\t\tfrom brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump\n" +
-                            "\t\twhere brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_interest in ('1142')\n" +
+                            "\t\twhere (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_interest in ('1142')\n" +
                             "\t\t\tand brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.user_age in ('4', '3', '2', '1')\n" +
                             "\t\t\tand brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_basic in ('1605', '1603', '1604', '1563')\n" +
-                            "\t\t\tand not (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_industry in ('1140'))\n" +
+                            "\t\t\tand not (brand_crm_ship.ktv_algo_brand_display_ad_label_out_dump.label_list_industry in ('1140')))\n" +
                             "\t) t1\n" +
                             ") t2\n" +
                             "\tjoin (\n" +
@@ -124,6 +124,4 @@ public class MySqlSelectTest_98 extends MysqlTest {
                     output);
         }
     }
-
-
 }

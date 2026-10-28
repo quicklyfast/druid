@@ -20,11 +20,14 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class MySqlSelectTest_112_orderBy extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class MySqlSelectTest_112_orderBy {
+    @Test
     public void test_0() throws Exception {
         String sql = "select coach_id, tournament_name ,tournament_id, season_id, season, count(1) as num,\n" +
                 "sum(case when wdl = 0 then 1 else 0 end) as loss,\n" +
@@ -65,34 +68,34 @@ public class MySqlSelectTest_112_orderBy extends TestCase {
 
         assertEquals("SELECT coach_id, tournament_name, tournament_id, season_id, season\n" +
                 "\t, count(1) AS num\n" +
-                "\t, sum(CASE \n" +
+                "\t, sum(CASE\n" +
                 "\t\tWHEN wdl = 0 THEN 1\n" +
                 "\t\tELSE 0\n" +
                 "\tEND) AS loss\n" +
-                "\t, sum(CASE \n" +
+                "\t, sum(CASE\n" +
                 "\t\tWHEN wdl = 1 THEN 1\n" +
                 "\t\tELSE 0\n" +
                 "\tEND) AS draw\n" +
-                "\t, sum(CASE \n" +
+                "\t, sum(CASE\n" +
                 "\t\tWHEN wdl = 3 THEN 1\n" +
                 "\t\tELSE 0\n" +
                 "\tEND) AS win\n" +
                 "FROM (\n" +
                 "\tSELECT a.coach_id, b.team_id, a.home_team_id, a.away_team_id, a.tournament_id\n" +
                 "\t\t, a.tournament_name, a.season_id, a.season, a.result\n" +
-                "\t\t, CASE \n" +
+                "\t\t, CASE\n" +
                 "\t\t\tWHEN b.team_id = a.home_team_id THEN \n" +
-                "\t\t\t\tCASE \n" +
+                "\t\t\t\t(CASE\n" +
                 "\t\t\t\t\tWHEN CONVERT(SUBSTRING(a.result, 1, LOCATE(':', a.result) - 1), SIGNED) > CONVERT(SUBSTRING(a.result, LOCATE(':', a.result) + 1, CHAR_LENGTH(a.result)), SIGNED) THEN 3\n" +
                 "\t\t\t\t\tWHEN CONVERT(SUBSTRING(a.result, 1, LOCATE(':', a.result) - 1), SIGNED) < CONVERT(SUBSTRING(a.result, LOCATE(':', a.result) + 1, CHAR_LENGTH(a.result)), SIGNED) THEN 0\n" +
                 "\t\t\t\t\tELSE 1\n" +
-                "\t\t\t\tEND\n" +
+                "\t\t\t\tEND)\n" +
                 "\t\t\tWHEN b.team_id = a.away_team_id THEN \n" +
-                "\t\t\t\tCASE \n" +
+                "\t\t\t\t(CASE\n" +
                 "\t\t\t\t\tWHEN CONVERT(SUBSTRING(a.result, 1, LOCATE(':', a.result) - 1), SIGNED) > CONVERT(SUBSTRING(a.result, LOCATE(':', a.result) + 1, CHAR_LENGTH(a.result)), SIGNED) THEN 0\n" +
                 "\t\t\t\t\tWHEN CONVERT(SUBSTRING(a.result, 1, LOCATE(':', a.result) - 1), SIGNED) < CONVERT(SUBSTRING(a.result, LOCATE(':', a.result) + 1, CHAR_LENGTH(a.result)), SIGNED) THEN 3\n" +
                 "\t\t\t\t\tELSE 1\n" +
-                "\t\t\t\tEND\n" +
+                "\t\t\t\tEND)\n" +
                 "\t\tEND AS wdl\n" +
                 "\tFROM p_coach_match_detail a\n" +
                 "\t\tLEFT JOIN p_coach_career b\n" +
@@ -106,6 +109,4 @@ public class MySqlSelectTest_112_orderBy extends TestCase {
                 "GROUP BY coach_id, tournament_name, tournament_id, season_id, season\n" +
                 "ORDER BY season_id DESC", stmt.toString());
     }
-
-
 }

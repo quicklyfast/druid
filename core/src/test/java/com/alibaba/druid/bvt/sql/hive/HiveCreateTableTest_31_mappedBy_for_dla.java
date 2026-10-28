@@ -20,35 +20,36 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 import com.alibaba.druid.util.JdbcConstants;
-import org.junit.Assert;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class HiveCreateTableTest_31_mappedBy_for_dla extends OracleTest {
     public void test_0() throws Exception {
         String sql = //
                 "create table aaaa (\n" +
                         "  id int not null MAPPED BY (name='pk',format='yyy',charset='utf8',type='string'）\n" +
-                        ") MAPPED by (name='AAAA')"; //
+                        ") MAPPED by (name='AAAA')";
 
         List<SQLStatement> statementList = SQLUtils.toStatementList(sql, JdbcConstants.HIVE);
         SQLStatement stmt = statementList.get(0);
         System.out.println(stmt.toString());
 
-        Assert.assertEquals(1, statementList.size());
+        assertEquals(1, statementList.size());
 
         SchemaStatVisitor visitor = SQLUtils.createSchemaStatVisitor(JdbcConstants.HIVE);
         stmt.accept(visitor);
 
         assertEquals("CREATE TABLE aaaa (\n" +
                 "\tid int NOT NULL MAPPED BY (name = 'pk', format = 'yyy', charset = 'utf8', type = 'string')\n" +
-                ")\n" +
-                "MAPPED BY (name = 'AAAA')", stmt.toString());
+                ")" +
+                " MAPPED BY (name = 'AAAA')", stmt.toString());
 
         assertEquals("CREATE TABLE aaaa (\n" +
                 "\tid int NOT NULL MAPPED BY (name = 'pk', format = 'yyy', charset = 'utf8', type = 'string')\n" +
-                ")\n" +
-                "MAPPED BY (name = 'AAAA')", stmt.clone().toString());
+                ")" +
+                " MAPPED BY (name = 'AAAA')", stmt.clone().toString());
 
         System.out.println("Tables : " + visitor.getTables());
         System.out.println("fields : " + visitor.getColumns());
@@ -63,7 +64,5 @@ public class HiveCreateTableTest_31_mappedBy_for_dla extends OracleTest {
         assertEquals(0, visitor.getOrderByColumns().size());
 
         assertTrue(visitor.containsTable("aaaa"));
-
     }
-
 }

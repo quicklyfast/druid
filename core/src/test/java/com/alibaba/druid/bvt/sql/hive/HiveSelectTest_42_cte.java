@@ -19,11 +19,14 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.hive.ast.HiveInsertStatement;
 import com.alibaba.druid.util.JdbcConstants;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class HiveSelectTest_42_cte extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class HiveSelectTest_42_cte {
+    @Test
     public void test_0() throws Exception {
         String sql = "with dycg_perform_startgametaketimelog as(\n" +
                 "select app_id, if(ver is null, '', ver) as ver, if(machine_name is null, '', split(machine_name, '-') [0]) as machine_dc, game_id, current_step, err_code\n" +
@@ -61,34 +64,33 @@ public class HiveSelectTest_42_cte extends TestCase {
                 "\t, if(ver IS NOT NULL, ver, 'all') AS dycg_ver\n" +
                 "\t, if(machine_dc IS NOT NULL, machine_dc, 'all') AS machine_dc\n" +
                 "\t, if(game_id IS NOT NULL, game_id, 'all') AS game_id\n" +
-                "\t, sum(CASE \n" +
+                "\t, sum(CASE\n" +
                 "\t\tWHEN current_step = 6\n" +
                 "\t\t\tOR current_step = 7\n" +
                 "\t\tTHEN 1\n" +
                 "\t\tELSE 0\n" +
                 "\tEND) AS reach_game_process_cnt\n" +
-                "\t, sum(CASE \n" +
+                "\t, sum(CASE\n" +
                 "\t\tWHEN current_step = 5\n" +
                 "\t\t\tOR current_step = 6\n" +
                 "\t\t\tOR current_step = 7\n" +
                 "\t\tTHEN 1\n" +
                 "\t\tELSE 0\n" +
                 "\tEND) AS tot_reach_game_process_cnt\n" +
-                "\t, round(1 - sum(CASE \n" +
+                "\t, round(1 - (sum(CASE\n" +
                 "\t\tWHEN current_step = 5 THEN 1\n" +
                 "\t\tELSE 0\n" +
-                "\tEND) / sum(CASE \n" +
+                "\tEND) / sum(CASE\n" +
                 "\t\tWHEN current_step = 5\n" +
                 "\t\t\tOR current_step = 6\n" +
                 "\t\t\tOR current_step = 7\n" +
                 "\t\tTHEN 1\n" +
                 "\t\tELSE 0\n" +
-                "\tEND), 4) AS reach_game_process_rate\n" +
+                "\tEND)), 4) AS reach_game_process_rate\n" +
                 "\t, from_unixtime(unix_timestamp(CAST(${dt_hour} AS string), 'yyyyMMddHH'), 'yyyy-MM-dd') AS dt\n" +
                 "\t, substring(${dt_hour}, 9, 2) AS `hour`\n" +
                 "FROM dycg_perform_startgametaketimelog\n" +
                 "GROUP BY app_id, ver, machine_dc, game_id\n" +
                 "\tGROUPING SETS ((app_id), (app_id, ver), (app_id, ver, machine_dc), (app_id, ver, game_id), (app_id, machine_dc), (app_id, machine_dc, game_id), (app_id, game_id), (app_id, ver, machine_dc, game_id))", stmt.toString());
-
     }
 }

@@ -15,13 +15,11 @@
  */
 package com.alibaba.druid.bvt.sql.mysql.select;
 
-import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.MysqlTest;
-import com.alibaba.druid.sql.SQLUtils;
-import com.alibaba.druid.sql.ast.SQLLimit;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.dialect.ads.parser.AdsStatementParser;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MySqlSelectTest_adsHintAndTypeConvert extends MysqlTest {
     public void test_1() throws Exception {
@@ -75,14 +73,5 @@ public class MySqlSelectTest_adsHintAndTypeConvert extends MysqlTest {
         SQLStatement statement = parser.parseStatement();
 
         assertEquals("SELECT *\n" + "FROM test1\n" + "WHERE DATE '2019-1-1' = date_test", statement.toString());
-    }
-
-    public void test_7() throws Exception {
-        String sql = "select DATE '2019-1-1'";
-
-        AdsStatementParser parser = new AdsStatementParser(sql);
-        SQLStatement statement = parser.parseStatement();
-
-        assertEquals("SELECT DATE '2019-1-1'", statement.toString());
     }
 }

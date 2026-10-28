@@ -41,6 +41,7 @@ public class CharTypes {
     }
 
     private static final boolean[] firstIdentifierFlags = new boolean[256];
+    private static final boolean[] UNDERSCORE_LETTERS = new boolean[256];
 
     static {
         // the Latin letter decimal values range between 192('À') and 255('ÿ') but exclude 215('×') and 247('÷').
@@ -54,10 +55,22 @@ public class CharTypes {
         firstIdentifierFlags['`'] = true;
         firstIdentifierFlags['_'] = true;
         firstIdentifierFlags['$'] = true;
+
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            UNDERSCORE_LETTERS[c] = true;
+        }
+        for (char c = 'a'; c <= 'z'; ++c) {
+            UNDERSCORE_LETTERS[c] = true;
+        }
+        UNDERSCORE_LETTERS['_'] = true;
+    }
+
+    public static boolean letterOrUnderScore(char c) {
+        return (c & ~0xFF) == 0 && UNDERSCORE_LETTERS[c & 0xFF];
     }
 
     public static boolean isFirstIdentifierChar(char c) {
-        if (c <= firstIdentifierFlags.length) {
+        if (c < firstIdentifierFlags.length) {
             return firstIdentifierFlags[c];
         }
         return c != '　' && c != '，';
@@ -90,7 +103,7 @@ public class CharTypes {
     }
 
     public static boolean isIdentifierChar(char c) {
-        if (c <= identifierFlags.length) {
+        if (c < identifierFlags.length) {
             return identifierFlags[c];
         }
         return c != '　' && c != '，' && c != '）' && c != '（';
@@ -125,7 +138,7 @@ public class CharTypes {
      * @return false if {@link LayoutCharacters#EOI}
      */
     public static boolean isWhitespace(char c) {
-        return (c <= whitespaceFlags.length && whitespaceFlags[c]) //
+        return (c < whitespaceFlags.length && whitespaceFlags[c]) //
                 || c == '　'; // Chinese space
     }
 

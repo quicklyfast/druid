@@ -16,16 +16,23 @@
 package com.alibaba.druid.bvt.sql.mysql.select;
 
 import com.alibaba.druid.sql.MysqlTest;
-import com.alibaba.druid.sql.ast.SQLCommentHint;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class MySqlSelectTest_92 extends MysqlTest {
     public void test_0() throws Exception {
-        String sql = "select * from TABLENAME cfgdatasou0_ where cfgdatasou0_.type=? and cfgdatasou0_.module_name=? and cfgdatasou0_.node_type=? or cfgdatasou0_.type=? and cfgdatasou0_.module_name=? and cfgdatasou0_.node_type=? or cfgdatasou0_.type=? and cfgdatasou0_.module_name=? and cfgdatasou0_.node_type=?";
+        String sql = "select * from TABLENAME cfgdatasou0_ "
+            + "where cfgdatasou0_.type=? and cfgdatasou0_.module_name=? "
+            + "and cfgdatasou0_.node_type=? or cfgdatasou0_.type=? "
+            + "and cfgdatasou0_.module_name=? and cfgdatasou0_.node_type=? "
+            + "or cfgdatasou0_.typeccc=?"
+            + " and cfgdatasou0_.module_nameaaa=?"
+            + " and cfgdatasou0_.node_typebbb=?";
 
         MySqlStatementParser parser = new MySqlStatementParser(sql);
         List<SQLStatement> statementList = parser.parseStatementList();
@@ -33,6 +40,7 @@ public class MySqlSelectTest_92 extends MysqlTest {
         assertEquals(1, statementList.size());
 
         SQLSelectStatement stmt = (SQLSelectStatement) statementList.get(0);
+        System.out.println(stmt.toString());
         assertEquals("SELECT *\n" +
                 "FROM TABLENAME cfgdatasou0_\n" +
                 "WHERE cfgdatasou0_.type = ?\n" +
@@ -41,8 +49,8 @@ public class MySqlSelectTest_92 extends MysqlTest {
                 "\tOR cfgdatasou0_.type = ?\n" +
                 "\tAND cfgdatasou0_.module_name = ?\n" +
                 "\tAND cfgdatasou0_.node_type = ?\n" +
-                "\tOR cfgdatasou0_.type = ?\n" +
-                "\tAND cfgdatasou0_.module_name = ?\n" +
-                "\tAND cfgdatasou0_.node_type = ?", stmt.toString());
+                "\tOR cfgdatasou0_.typeccc = ?\n" +
+                "\t\tAND cfgdatasou0_.module_nameaaa = ?\n" +
+                "\t\tAND cfgdatasou0_.node_typebbb = ?", stmt.toString());
     }
 }
